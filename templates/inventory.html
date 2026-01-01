@@ -1,0 +1,452 @@
+{% extends "base.html" %}
+
+{% block title %}Quản Lý Tồn Kho - Siêu Thị Mini{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1><i class="bi bi-building"></i> Quản Lý Tồn Kho</h1>
+            <p>Quản lý nhập, xuất và điều chỉnh hàng hóa</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#adjustModal">
+                <i class="bi bi-pencil-square"></i> Điều Chỉnh
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-4" role="tablist">
+    <li class="nav-item">
+        <a class="nav-link active" data-bs-toggle="tab" href="#inventory-tab" role="tab">
+            <i class="bi bi-list"></i> Tồn Kho
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#low-stock-tab" role="tab">
+            <i class="bi bi-exclamation-triangle"></i> Sắp Hết
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#expiry-tab" role="tab">
+            <i class="bi bi-calendar-alert"></i> Hạn Sử Dụng
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#movements-tab" role="tab">
+            <i class="bi bi-arrow-left-right"></i> Lịch Sử
+        </a>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <!-- Inventory Tab -->
+    <div class="tab-pane fade show active" id="inventory-tab" role="tabpanel">
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="mb-0">Danh Sách Tồn Kho</h5>
+                    </div>
+                    <div class="col-auto">
+                        <input type="text" class="form-control form-control-sm" id="searchInventory" 
+                               placeholder="Tìm kiếm...">
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Mã Sản Phẩm</th>
+                                <th>Tên Sản Phẩm</th>
+                                <th>Tồn Kho</th>
+                                <th>Đã Đặt</th>
+                                <th>Có Sẵn</th>
+                                <th>Mức Tái Đặt</th>
+                                <th>Vị Trí</th>
+                                <th>Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody">
+                            <tr>
+                                <td colspan="8" class="text-center text-muted">Đang tải...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock Tab -->
+    <div class="tab-pane fade" id="low-stock-tab" role="tabpanel">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle-fill"></i> Sản Phẩm Sắp Hết Kho</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Sản Phẩm</th>
+                                <th>Tồn Kho</th>
+                                <th>Mức Tái Đặt</th>
+                                <th>Chênh Lệch</th>
+                                <th>Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lowStockTableBody">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">Đang tải...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expiry Tab -->
+    <div class="tab-pane fade" id="expiry-tab" role="tabpanel">
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="mb-0"><i class="bi bi-calendar-alert"></i> Cảnh Báo Hạn Sử Dụng</h5>
+                    </div>
+                    <div class="col-auto">
+                        <label>Hiển thị cảnh báo trong: 
+                            <select class="form-select form-select-sm d-inline-block w-auto" id="expiryDaysFilter" onchange="loadExpiryWarnings()">
+                                <option value="7">7 ngày</option>
+                                <option value="14">14 ngày</option>
+                                <option value="30" selected>30 ngày</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Sản Phẩm</th>
+                                <th>Batch</th>
+                                <th>Hạn Sử Dụng</th>
+                                <th>Số Lượng</th>
+                                <th>Ngày Còn Lại</th>
+                                <th>Trạng Thái</th>
+                                <th>Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expiryTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">Đang tải...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Movements Tab -->
+    <div class="tab-pane fade" id="movements-tab" role="tabpanel">
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="mb-0">Lịch Sử Nhập/Xuất</h5>
+                    </div>
+                    <div class="col-auto">
+                        <select class="form-select form-select-sm d-inline-block w-auto" id="productFilter" onchange="loadMovements()">
+                            <option value="">-- Tất Cả Sản Phẩm --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Sản Phẩm</th>
+                                <th>Loại</th>
+                                <th>Số Lượng</th>
+                                <th>Tham Chiếu</th>
+                                <th>Ghi Chú</th>
+                                <th>Ngày Giờ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="movementsTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">Đang tải...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Adjust Modal -->
+<div class="modal fade" id="adjustModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Điều Chỉnh Tồn Kho</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="adjustForm">
+                    <div class="mb-3">
+                        <label class="form-label">Sản Phẩm *</label>
+                        <select class="form-select" id="adjustProductId" required>
+                            <option value="">-- Chọn Sản Phẩm --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Số Lượng Điều Chỉnh *</label>
+                        <div class="input-group">
+                            <button class="btn btn-outline-secondary" type="button" onclick="adjustQuantity(-1)">
+                                <i class="bi bi-dash"></i>
+                            </button>
+                            <input type="number" class="form-control text-center" id="adjustQuantity" value="0" required>
+                            <button class="btn btn-outline-secondary" type="button" onclick="adjustQuantity(1)">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted">Nhập số dương để thêm, số âm để giảm</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Lý Do *</label>
+                        <textarea class="form-control" id="adjustReason" rows="3" required 
+                                  placeholder="Nhập lý do điều chỉnh..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="submitAdjust()">Điều Chỉnh</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const API_URL = 'http://localhost:5000/api';
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadInventory();
+        loadLowStock();
+        loadExpiryWarnings();
+        loadMovements();
+    });
+
+    function loadInventory() {
+        fetch(`${API_URL}/inventory/all`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    renderInventoryTable(data.data.inventories);
+                }
+            });
+    }
+
+    function renderInventoryTable(items) {
+        const tbody = document.getElementById('inventoryTableBody');
+        
+        if (!items || items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Không có dữ liệu</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = items.map(item => {
+            const status = item.quantity_available <= item.reorder_level ? 'warning' : 'success';
+            return `
+                <tr>
+                    <td><strong>#${item.product_id}</strong></td>
+                    <td>Sản phẩm ${item.product_id}</td>
+                    <td><strong>${item.quantity_on_hand}</strong></td>
+                    <td>${item.quantity_reserved}</td>
+                    <td>${item.quantity_available}</td>
+                    <td>${item.reorder_level}</td>
+                    <td>${item.location || 'N/A'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="viewMovements(${item.product_id})">
+                            <i class="bi bi-arrow-left-right"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function loadLowStock() {
+        fetch(`${API_URL}/inventory/low-stock`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const tbody = document.getElementById('lowStockTableBody');
+                    const items = data.data.low_stock_items;
+                    
+                    if (items.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Không có sản phẩm sắp hết</td></tr>';
+                        return;
+                    }
+
+                    tbody.innerHTML = items.map(item => `
+                        <tr>
+                            <td>Sản phẩm ${item.product_id}</td>
+                            <td><span class="badge bg-danger">${item.quantity_available}</span></td>
+                            <td>${item.reorder_level}</td>
+                            <td>
+                                <span class="badge bg-warning">
+                                    ${item.reorder_level - item.quantity_available} thiếu
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-primary">
+                                    <i class="bi bi-cart-plus"></i> Đặt Hàng
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            });
+    }
+
+    function loadExpiryWarnings() {
+        const days = document.getElementById('expiryDaysFilter').value || 30;
+        fetch(`${API_URL}/inventory/expiry-warnings?days=${days}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const tbody = document.getElementById('expiryTableBody');
+                    const items = data.data.warnings;
+                    
+                    if (items.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Không có cảnh báo</td></tr>';
+                        return;
+                    }
+
+                    tbody.innerHTML = items.map(item => {
+                        const daysLeft = Math.ceil((new Date(item.expiry_date) - new Date()) / (1000 * 60 * 60 * 24));
+                        let status = 'success';
+                        if (daysLeft < 0) {
+                            status = 'danger';
+                        } else if (daysLeft < 7) {
+                            status = 'warning';
+                        }
+                        
+                        return `
+                            <tr>
+                                <td>Sản phẩm ${item.product_id}</td>
+                                <td><code>${item.batch_number || 'N/A'}</code></td>
+                                <td>${new Date(item.expiry_date).toLocaleDateString('vi-VN')}</td>
+                                <td>${item.quantity}</td>
+                                <td>${daysLeft < 0 ? 'Hết hạn' : daysLeft + ' ngày'}</td>
+                                <td><span class="badge bg-${status}">${item.warning_level}</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            });
+    }
+
+    function loadMovements() {
+        fetch(`${API_URL}/inventory/movements/1?page=1&per_page=10`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const tbody = document.getElementById('movementsTableBody');
+                    const items = data.data.movements;
+                    
+                    if (items.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Không có lịch sử</td></tr>';
+                        return;
+                    }
+
+                    tbody.innerHTML = items.map(item => {
+                        let typeIcon = '';
+                        let typeBadge = '';
+                        if (item.movement_type === 'IN') {
+                            typeIcon = 'bi-arrow-down-right';
+                            typeBadge = 'success';
+                        } else if (item.movement_type === 'OUT') {
+                            typeIcon = 'bi-arrow-up-left';
+                            typeBadge = 'danger';
+                        } else {
+                            typeIcon = 'bi-arrow-left-right';
+                            typeBadge = 'warning';
+                        }
+                        
+                        return `
+                            <tr>
+                                <td>Sản phẩm ${item.inventory_id}</td>
+                                <td><span class="badge bg-${typeBadge}">
+                                    <i class="bi ${typeIcon}"></i> ${item.movement_type}
+                                </span></td>
+                                <td><strong>${item.quantity}</strong></td>
+                                <td>${item.reference_id || 'N/A'}</td>
+                                <td>${item.notes || 'N/A'}</td>
+                                <td>${new Date(item.created_at).toLocaleString('vi-VN')}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            });
+    }
+
+    function adjustQuantity(value) {
+        const input = document.getElementById('adjustQuantity');
+        input.value = parseInt(input.value) + value;
+    }
+
+    function submitAdjust() {
+        const productId = document.getElementById('adjustProductId').value;
+        const quantity = parseInt(document.getElementById('adjustQuantity').value);
+        const reason = document.getElementById('adjustReason').value;
+
+        if (!productId || !reason) {
+            alert('Vui lòng điền đầy đủ thông tin');
+            return;
+        }
+
+        fetch(`${API_URL}/inventory/adjust`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                product_id: parseInt(productId),
+                quantity: quantity,
+                reason: reason
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert('Điều chỉnh thành công');
+                bootstrap.Modal.getInstance(document.getElementById('adjustModal')).hide();
+                document.getElementById('adjustForm').reset();
+                loadInventory();
+                loadMovements();
+            }
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Trang Chủ - Quản Lý Siêu Thị Mini{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: 60px 20px;">
+    <div style="max-width: 600px; margin: 0 auto;">
+        <div style="font-size: 4rem; margin-bottom: 20px;">
+            <i class="bi bi-shop" style="color: #e74c3c;"></i>
+        </div>
+        
+        <h1 style="color: #2c3e50; font-size: 2.5rem; margin-bottom: 10px;">
+            Quản Lý Siêu Thị Mini
+        </h1>
+        
+        <p style="color: #7f8c8d; font-size: 1.2rem; margin-bottom: 40px;">
+            Hệ thống quản lý bán lẻ với kiến trúc Service-Oriented Architecture (SOA)
+        </p>
+
+        <div class="row g-3" style="margin-bottom: 40px;">
+            <div class="col-md-6">
+                <a href="/dashboard" class="card text-decoration-none" style="border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+                    <div class="card-body" style="text-align: center; padding: 30px;">
+                        <i class="bi bi-speedometer2" style="font-size: 2rem; color: #3498db; display: block; margin-bottom: 10px;"></i>
+                        <h5 style="color: #2c3e50;">Dashboard</h5>
+                        <p style="color: #7f8c8d; margin: 0;">Xem tổng quan hệ thống</p>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="col-md-6">
+                <a href="/products" class="card text-decoration-none" style="border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+                    <div class="card-body" style="text-align: center; padding: 30px;">
+                        <i class="bi bi-box" style="font-size: 2rem; color: #27ae60; display: block; margin-bottom: 10px;"></i>
+                        <h5 style="color: #2c3e50;">Sản Phẩm</h5>
+                        <p style="color: #7f8c8d; margin: 0;">Quản lý danh mục sản phẩm</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-3" style="margin-bottom: 40px;">
+            <div class="col-md-6">
+                <a href="/inventory" class="card text-decoration-none" style="border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+                    <div class="card-body" style="text-align: center; padding: 30px;">
+                        <i class="bi bi-building" style="font-size: 2rem; color: #f39c12; display: block; margin-bottom: 10px;"></i>
+                        <h5 style="color: #2c3e50;">Tồn Kho</h5>
+                        <p style="color: #7f8c8d; margin: 0;">Quản lý nhập xuất hàng</p>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="col-md-6">
+                <a href="/sales" class="card text-decoration-none" style="border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+                    <div class="card-body" style="text-align: center; padding: 30px;">
+                        <i class="bi bi-receipt" style="font-size: 2rem; color: #e74c3c; display: block; margin-bottom: 10px;"></i>
+                        <h5 style="color: #2c3e50;">Bán Hàng</h5>
+                        <p style="color: #7f8c8d; margin: 0;">POS quản lý hóa đơn</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <a href="/suppliers" class="card text-decoration-none" style="border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+                    <div class="card-body" style="text-align: center; padding: 30px;">
+                        <i class="bi bi-truck" style="font-size: 2rem; color: #9b59b6; display: block; margin-bottom: 10px;"></i>
+                        <h5 style="color: #2c3e50;">Nhà Cung Cấp</h5>
+                        <p style="color: #7f8c8d; margin: 0;">Quản lý NCC & đơn nhập</p>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="col-md-6">
+                <a href="/reports" class="card text-decoration-none" style="border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+                    <div class="card-body" style="text-align: center; padding: 30px;">
+                        <i class="bi bi-bar-chart" style="font-size: 2rem; color: #16a085; display: block; margin-bottom: 10px;"></i>
+                        <h5 style="color: #2c3e50;">Báo Cáo</h5>
+                        <p style="color: #7f8c8d; margin: 0;">Thống kê & phân tích</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div style="margin-top: 60px; padding: 30px; background: #ecf0f1; border-radius: 8px;">
+            <h4 style="color: #2c3e50; margin-bottom: 20px;">Kiến Trúc Hệ Thống</h4>
+            <p style="color: #7f8c8d; margin-bottom: 15px; text-align: left;">
+                Hệ thống được thiết kế dựa trên Service-Oriented Architecture (SOA) với các thành phần độc lập:
+            </p>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; text-align: left;">
+                <div>
+                    <strong style="color: #2c3e50;">🔵 Product Service</strong>
+                    <p style="color: #7f8c8d; font-size: 0.9rem; margin: 5px 0;">Port 5001 - Quản lý sản phẩm</p>
+                </div>
+                <div>
+                    <strong style="color: #2c3e50;">🟡 Inventory Service</strong>
+                    <p style="color: #7f8c8d; font-size: 0.9rem; margin: 5px 0;">Port 5002 - Quản lý tồn kho</p>
+                </div>
+                <div>
+                    <strong style="color: #2c3e50;">🔴 Sales Service</strong>
+                    <p style="color: #7f8c8d; font-size: 0.9rem; margin: 5px 0;">Port 5003 - Bán hàng POS</p>
+                </div>
+                <div>
+                    <strong style="color: #2c3e50;">🟣 Supplier Service</strong>
+                    <p style="color: #7f8c8d; font-size: 0.9rem; margin: 5px 0;">Port 5004 - Nhà cung cấp</p>
+                </div>
+                <div style="grid-column: 1/-1;">
+                    <strong style="color: #2c3e50;">🌐 API Gateway</strong>
+                    <p style="color: #7f8c8d; font-size: 0.9rem; margin: 5px 0;">Port 5000 - Điều phối requests</p>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 30px; color: #7f8c8d; font-size: 0.9rem;">
+            <p>Phiên bản: 1.0.0 | Python Flask | SQLAlchemy ORM</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

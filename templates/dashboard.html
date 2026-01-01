@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Quản Lý Siêu Thị Mini{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-speedometer2"></i> Dashboard</h1>
+    <p>Tổng quan hệ thống quản lý siêu thị mini</p>
+</div>
+
+<!-- Statistics Row -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-box success">
+            <div class="icon-circle success">
+                <i class="bi bi-currency-dollar"></i>
+            </div>
+            <h3 id="daily-revenue">0 ₫</h3>
+            <p>Doanh Thu Hôm Nay</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-box warning">
+            <div class="icon-circle warning">
+                <i class="bi bi-bag"></i>
+            </div>
+            <h3 id="today-sales">0</h3>
+            <p>Số Hóa Đơn Hôm Nay</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-box danger">
+            <div class="icon-circle danger">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <h3 id="low-stock-count">0</h3>
+            <p>Sản Phẩm Sắp Hết</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-box info">
+            <div class="icon-circle info">
+                <i class="bi bi-calendar-alert"></i>
+            </div>
+            <h3 id="expiry-count">0</h3>
+            <p>Cảnh Báo Hạn Sử Dụng</p>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-graph-up"></i> Doanh Thu 7 Ngày Gần Đây
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-pie-chart"></i> Sản Phẩm Bán Chạy
+            </div>
+            <div class="card-body">
+                <canvas id="topProductsChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alerts Row -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-exclamation-triangle-fill"></i> Sản Phẩm Sắp Hết Kho
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Sản Phẩm</th>
+                                <th>Tồn Kho</th>
+                                <th>Mức Tái Đặt</th>
+                                <th>Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lowStockList">
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">Đang tải...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-calendar-alert"></i> Cảnh Báo Hạn Sử Dụng
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Sản Phẩm</th>
+                                <th>Hạn</th>
+                                <th>Số Lượng</th>
+                                <th>Trạng Thái</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expiryList">
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">Đang tải...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+    // API Base URL
+    const API_URL = 'http://localhost:5000/api';
+
+    // Load Dashboard Data
+    document.addEventListener('DOMContentLoaded', function() {
+        loadDailyRevenue();
+        loadLowStockProducts();
+        loadExpiryWarnings();
+        loadRevenueChart();
+        loadTopProductsChart();
+    });
+
+    // Load Daily Revenue
+    function loadDailyRevenue() {
+        const today = new Date().toISOString().split('T')[0];
+        fetch(`${API_URL}/sales/revenue?start_date=${today}T00:00:00&end_date=${today}T23:59:59`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('daily-revenue').textContent = 
+                        new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
+                            .format(data.data.total_revenue);
+                    document.getElementById('today-sales').textContent = data.data.invoice_count;
+                }
+            })
+            .catch(err => console.error('Error:', err));
+    }
+
+    // Load Low Stock Products
+    function loadLowStockProducts() {
+        fetch(`${API_URL}/inventory/low-stock`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const items = data.data.low_stock_items;
+                    document.getElementById('low-stock-count').textContent = items.length;
+                    
+                    const html = items.slice(0, 5).map(item => `
+                        <tr>
+                            <td><strong>#${item.product_id}</strong></td>
+                            <td><span class="badge badge-warning">${item.quantity_available}</span></td>
+                            <td>${item.reorder_level}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="orderProduct(${item.product_id})">
+                                    <i class="bi bi-cart-plus"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                    
+                    document.getElementById('lowStockList').innerHTML = html || 
+                        '<tr><td colspan="4" class="text-center text-muted">Không có sản phẩm sắp hết</td></tr>';
+                }
+            })
+            .catch(err => console.error('Error:', err));
+    }
+
+    // Load Expiry Warnings
+    function loadExpiryWarnings() {
+        fetch(`${API_URL}/inventory/expiry-warnings?days=30`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const items = data.data.warnings;
+                    document.getElementById('expiry-count').textContent = items.length;
+                    
+                    const html = items.slice(0, 5).map(item => {
+                        const daysLeft = Math.ceil((new Date(item.expiry_date) - new Date()) / (1000 * 60 * 60 * 24));
+                        let status = 'success';
+                        if (daysLeft < 0) status = 'danger';
+                        else if (daysLeft < 7) status = 'warning';
+                        
+                        return `
+                            <tr>
+                                <td><strong>#${item.product_id}</strong></td>
+                                <td>${new Date(item.expiry_date).toLocaleDateString('vi-VN')}</td>
+                                <td>${item.quantity}</td>
+                                <td><span class="badge badge-${status}">
+                                    ${daysLeft < 0 ? 'Hết hạn' : daysLeft + ' ngày'}
+                                </span></td>
+                            </tr>
+                        `;
+                    }).join('');
+                    
+                    document.getElementById('expiryList').innerHTML = html || 
+                        '<tr><td colspan="4" class="text-center text-muted">Không có cảnh báo hạn sử dụng</td></tr>';
+                }
+            })
+            .catch(err => console.error('Error:', err));
+    }
+
+    // Revenue Chart (7 days)
+    function loadRevenueChart() {
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        const labels = [];
+        const data = [];
+        
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            labels.push(date.toLocaleDateString('vi-VN', { weekday: 'short', month: 'numeric', day: 'numeric' }));
+            data.push(Math.random() * 10000000); // Placeholder data
+        }
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Doanh Thu (VND)',
+                    data: data,
+                    borderColor: '#e74c3c',
+                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 6,
+                    pointBackgroundColor: '#e74c3c',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                            padding: 15,
+                            font: { size: 12, weight: 'bold' }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return (value / 1000000).toFixed(1) + 'M';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Top Products Chart
+    function loadTopProductsChart() {
+        const ctx = document.getElementById('topProductsChart').getContext('2d');
+        
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Nước Ngọt', 'Bánh Mì', 'Nước Lọc', 'Khác'],
+                datasets: [{
+                    data: [30, 25, 20, 25],
+                    backgroundColor: [
+                        '#e74c3c',
+                        '#f39c12',
+                        '#27ae60',
+                        '#3498db'
+                    ],
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            font: { size: 12 }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Order Product Helper
+    function orderProduct(productId) {
+        alert('Chưa implement');
+    }
+</script>
+{% endblock %}

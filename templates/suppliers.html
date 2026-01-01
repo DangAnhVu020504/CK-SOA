@@ -1,0 +1,472 @@
+{% extends "base.html" %}
+
+{% block title %}Quản Lý Nhà Cung Cấp - Siêu Thị Mini{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1><i class="bi bi-truck"></i> Quản Lý Nhà Cung Cấp</h1>
+            <p>Quản lý thông tin nhà cung cấp và đơn nhập hàng</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#supplierModal">
+                <i class="bi bi-plus-circle"></i> Thêm NCC
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-4" role="tablist">
+    <li class="nav-item">
+        <a class="nav-link active" data-bs-toggle="tab" href="#suppliers-tab" role="tab">
+            <i class="bi bi-list"></i> Danh Sách NCC
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#purchase-orders-tab" role="tab">
+            <i class="bi bi-clipboard-check"></i> Đơn Nhập Hàng
+        </a>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <!-- Suppliers Tab -->
+    <div class="tab-pane fade show active" id="suppliers-tab" role="tabpanel">
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="mb-0">Danh Sách Nhà Cung Cấp</h5>
+                    </div>
+                    <div class="col-auto">
+                        <input type="text" class="form-control form-control-sm" id="searchSupplier" 
+                               placeholder="Tìm kiếm..." onkeyup="searchSuppliers()">
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Mã NCC</th>
+                                <th>Tên Nhà Cung Cấp</th>
+                                <th>Email</th>
+                                <th>Điện Thoại</th>
+                                <th>Địa Chỉ</th>
+                                <th>Người Liên Hệ</th>
+                                <th>Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="suppliersTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">Đang tải...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase Orders Tab -->
+    <div class="tab-pane fade" id="purchase-orders-tab" role="tabpanel">
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="mb-0">Danh Sách Đơn Nhập Hàng</h5>
+                    </div>
+                    <div class="col-auto">
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#poModal">
+                            <i class="bi bi-plus-circle"></i> Tạo PO
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Số PO</th>
+                                <th>Nhà Cung Cấp</th>
+                                <th>Ngày Đặt</th>
+                                <th>Ngày Giao Dự Kiến</th>
+                                <th>Tổng Tiền</th>
+                                <th>Thanh Toán</th>
+                                <th>Trạng Thái</th>
+                                <th>Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="poTableBody">
+                            <tr>
+                                <td colspan="8" class="text-center text-muted">Đang tải...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Supplier Modal -->
+<div class="modal fade" id="supplierModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thêm Nhà Cung Cấp</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="supplierForm">
+                    <input type="hidden" id="supplierId">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Mã NCC *</label>
+                            <input type="text" class="form-control" id="supplierCode" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Tên NCC *</label>
+                            <input type="text" class="form-control" id="supplierName" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="supplierEmail">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Điện Thoại</label>
+                            <input type="tel" class="form-control" id="supplierPhone">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Địa Chỉ</label>
+                        <input type="text" class="form-control" id="supplierAddress">
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Thành Phố</label>
+                            <input type="text" class="form-control" id="supplierCity">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Mã Bưu Điện</label>
+                            <input type="text" class="form-control" id="supplierPostalCode">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Người Liên Hệ</label>
+                            <input type="text" class="form-control" id="supplierContactPerson">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Số Điện Thoại Liên Hệ</label>
+                            <input type="tel" class="form-control" id="supplierContactPhone">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Điều Khoản Thanh Toán</label>
+                            <select class="form-select" id="supplierPaymentTerms">
+                                <option value="NET30">NET30</option>
+                                <option value="NET60">NET60</option>
+                                <option value="COD">COD (Thanh toán khi nhận hàng)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Chi Phí Vận Chuyển</label>
+                            <input type="number" class="form-control" id="supplierShippingCost" step="1000" value="0">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="saveSupplier()">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit PO Modal -->
+<div class="modal fade" id="poModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tạo Đơn Nhập Hàng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="poForm">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Số PO *</label>
+                            <input type="text" class="form-control" id="poNumber" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Nhà Cung Cấp *</label>
+                            <select class="form-select" id="supplierId" required>
+                                <option value="">-- Chọn NCC --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Ngày Giao Dự Kiến</label>
+                            <input type="datetime-local" class="form-control" id="expectedDeliveryDate">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Chiết Khấu (%)</label>
+                            <input type="number" class="form-control" id="discount" step="0.01" min="0" max="100" value="0">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Ghi Chú</label>
+                        <textarea class="form-control" id="poNotes" rows="2"></textarea>
+                    </div>
+
+                    <h6 class="mb-3">Chi Tiết Sản Phẩm</h6>
+                    <div id="poItems" style="max-height: 400px; overflow-y: auto;">
+                        <div class="alert alert-info">Thêm sản phẩm để tạo đơn nhập</div>
+                    </div>
+
+                    <button type="button" class="btn btn-sm btn-secondary mb-3" onclick="addPoItem()">
+                        <i class="bi bi-plus"></i> Thêm Sản Phẩm
+                    </button>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="savePO()">Tạo PO</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const API_URL = 'http://localhost:5000/api';
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadSuppliers();
+        loadPurchaseOrders();
+        loadSuppliersForPO();
+    });
+
+    function loadSuppliers() {
+        fetch(`${API_URL}/suppliers?page=1&per_page=20`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    renderSuppliersTable(data.data.suppliers);
+                }
+            });
+    }
+
+    function renderSuppliersTable(suppliers) {
+        const tbody = document.getElementById('suppliersTableBody');
+        
+        if (!suppliers || suppliers.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Không có NCC</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = suppliers.map(s => `
+            <tr>
+                <td><strong>${s.code}</strong></td>
+                <td>${s.name}</td>
+                <td>${s.email || 'N/A'}</td>
+                <td>${s.phone || 'N/A'}</td>
+                <td>${s.address || 'N/A'}</td>
+                <td>${s.contact_person || 'N/A'}</td>
+                <td>
+                    <button class="btn btn-sm btn-info" onclick="editSupplier(${s.id})">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteSupplier(${s.id})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function loadPurchaseOrders() {
+        fetch(`${API_URL}/suppliers/purchase-orders?page=1&per_page=20`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    renderPOTable(data.data.purchase_orders);
+                }
+            });
+    }
+
+    function renderPOTable(pos) {
+        const tbody = document.getElementById('poTableBody');
+        
+        if (!pos || pos.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Không có PO</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = pos.map(po => `
+            <tr>
+                <td><strong>${po.po_number}</strong></td>
+                <td>#${po.supplier_id}</td>
+                <td>${new Date(po.order_date).toLocaleDateString('vi-VN')}</td>
+                <td>${po.expected_delivery_date ? new Date(po.expected_delivery_date).toLocaleDateString('vi-VN') : 'N/A'}</td>
+                <td>${new Intl.NumberFormat('vi-VN').format(po.total_amount)} ₫</td>
+                <td>
+                    <span class="badge bg-${po.payment_status === 'paid' ? 'success' : po.payment_status === 'partial' ? 'warning' : 'secondary'}">
+                        ${po.payment_status}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge bg-${po.status === 'completed' ? 'success' : 'warning'}">
+                        ${po.status}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-info" onclick="viewPO(${po.id})">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function loadSuppliersForPO() {
+        fetch(`${API_URL}/suppliers?page=1&per_page=100`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const select = document.getElementById('supplierId');
+                    select.innerHTML = '<option value="">-- Chọn NCC --</option>' + 
+                        data.data.suppliers.map(s => `
+                            <option value="${s.id}">${s.name}</option>
+                        `).join('');
+                }
+            });
+    }
+
+    function saveSupplier() {
+        const supplierId = document.getElementById('supplierId').value;
+        const formData = {
+            code: document.getElementById('supplierCode').value,
+            name: document.getElementById('supplierName').value,
+            email: document.getElementById('supplierEmail').value,
+            phone: document.getElementById('supplierPhone').value,
+            address: document.getElementById('supplierAddress').value,
+            city: document.getElementById('supplierCity').value,
+            postal_code: document.getElementById('supplierPostalCode').value,
+            contact_person: document.getElementById('supplierContactPerson').value,
+            contact_phone: document.getElementById('supplierContactPhone').value,
+            payment_terms: document.getElementById('supplierPaymentTerms').value,
+            shipping_cost: parseFloat(document.getElementById('supplierShippingCost').value) || 0
+        };
+
+        const method = supplierId ? 'PUT' : 'POST';
+        const url = supplierId ? `${API_URL}/suppliers/${supplierId}` : `${API_URL}/suppliers`;
+
+        fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert('Lưu thành công');
+                bootstrap.Modal.getInstance(document.getElementById('supplierModal')).hide();
+                document.getElementById('supplierForm').reset();
+                document.getElementById('supplierId').value = '';
+                loadSuppliers();
+                loadSuppliersForPO();
+            }
+        });
+    }
+
+    function editSupplier(id) {
+        fetch(`${API_URL}/suppliers/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const s = data.data;
+                    document.getElementById('supplierId').value = id;
+                    document.getElementById('supplierCode').value = s.code;
+                    document.getElementById('supplierName').value = s.name;
+                    document.getElementById('supplierEmail').value = s.email || '';
+                    document.getElementById('supplierPhone').value = s.phone || '';
+                    document.getElementById('supplierAddress').value = s.address || '';
+                    document.getElementById('supplierCity').value = s.city || '';
+                    document.getElementById('supplierPostalCode').value = s.postal_code || '';
+                    document.getElementById('supplierContactPerson').value = s.contact_person || '';
+                    document.getElementById('supplierContactPhone').value = s.contact_phone || '';
+                    document.getElementById('supplierPaymentTerms').value = s.payment_terms || 'NET30';
+                    document.getElementById('supplierShippingCost').value = s.shipping_cost || 0;
+                    
+                    new bootstrap.Modal(document.getElementById('supplierModal')).show();
+                }
+            });
+    }
+
+    function deleteSupplier(id) {
+        if (confirm('Bạn chắc chắn muốn xóa?')) {
+            fetch(`${API_URL}/suppliers/${id}`, { method: 'DELETE' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Xóa thành công');
+                        loadSuppliers();
+                    }
+                });
+        }
+    }
+
+    function savePO() {
+        alert('Tạo PO sẽ được thực hiện');
+    }
+
+    function viewPO(id) {
+        alert('Chi tiết PO sẽ được hiển thị');
+    }
+
+    function searchSuppliers() {
+        const keyword = document.getElementById('searchSupplier').value;
+        if (!keyword) {
+            loadSuppliers();
+            return;
+        }
+        
+        // Simple client-side filter
+        fetch(`${API_URL}/suppliers?page=1&per_page=20`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const filtered = data.data.suppliers.filter(s =>
+                        s.name.toLowerCase().includes(keyword.toLowerCase()) ||
+                        s.code.toLowerCase().includes(keyword.toLowerCase())
+                    );
+                    renderSuppliersTable(filtered);
+                }
+            });
+    }
+
+    function addPoItem() {
+        alert('Thêm sản phẩm vào PO sẽ được thực hiện');
+    }
+</script>
+{% endblock %}
