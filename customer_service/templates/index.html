@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Khách Hàng - SOA Supermarket</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-title">
+                <div class="icon">👥</div>
+                <div>
+                    <h1>Quản Lý Khách Hàng</h1>
+                    <p>SOA Mini Supermarket Management System</p>
+                </div>
+            </div>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <div class="value" id="totalCustomers">0</div>
+                    <div class="label">Khách hàng</div>
+                </div>
+                <div class="stat-item">
+                    <div class="value" id="totalPoints">0</div>
+                    <div class="label">Tổng điểm</div>
+                </div>
+                <div class="stat-item">
+                    <div class="value" id="totalRevenue">0</div>
+                    <div class="label">Doanh thu (M)</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-tab="customers">
+                <i class="fas fa-users"></i> Danh sách khách hàng
+            </button>
+            <button class="nav-tab" data-tab="add">
+                <i class="fas fa-user-plus"></i> Thêm khách hàng
+            </button>
+            <button class="nav-tab" data-tab="points">
+                <i class="fas fa-star"></i> Tích điểm
+            </button>
+            <button class="nav-tab" data-tab="ranks">
+                <i class="fas fa-crown"></i> Hạng thành viên
+            </button>
+        </div>
+
+        <!-- Tab: Customer List -->
+        <div class="tab-content active" id="tab-customers">
+            <!-- Search -->
+            <div class="search-box">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="searchInput" placeholder="Tìm kiếm theo tên, SĐT, mã khách hàng...">
+            </div>
+
+            <!-- Customer Table -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-list icon"></i>
+                        Danh sách khách hàng
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="openTab('add')">
+                        <i class="fas fa-plus"></i> Thêm mới
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Mã KH</th>
+                                <th>Họ tên</th>
+                                <th>Số điện thoại</th>
+                                <th>Email</th>
+                                <th>Hạng</th>
+                                <th>Điểm</th>
+                                <th>Tổng chi tiêu</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customerTableBody">
+                            <!-- Data loaded by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <div class="icon">📋</div>
+                    <h3>Chưa có khách hàng nào</h3>
+                    <p>Hãy thêm khách hàng đầu tiên</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Add Customer -->
+        <div class="tab-content" id="tab-add">
+            <div class="card" style="max-width: 600px; margin: 0 auto;">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-user-plus icon"></i>
+                        Thêm khách hàng mới
+                    </div>
+                </div>
+                <form id="addCustomerForm">
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Họ và tên *</label>
+                            <input type="text" class="form-input" id="fullName" required placeholder="Nhập họ tên">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Số điện thoại *</label>
+                            <input type="tel" class="form-input" id="phone" required placeholder="0901234567">
+                        </div>
+                    </div>
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-input" id="email" placeholder="email@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Ngày sinh</label>
+                            <input type="date" class="form-input" id="dateOfBirth">
+                        </div>
+                    </div>
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Giới tính</label>
+                            <select class="form-input form-select" id="gender">
+                                <option value="other">Khác</option>
+                                <option value="male">Nam</option>
+                                <option value="female">Nữ</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">&nbsp;</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Địa chỉ</label>
+                        <input type="text" class="form-input" id="address" placeholder="Nhập địa chỉ">
+                    </div>
+                    <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px;">
+                        <button type="button" class="btn btn-secondary" onclick="openTab('customers')">Hủy</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Lưu khách hàng
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tab: Points Management -->
+        <div class="tab-content" id="tab-points">
+            <div class="grid grid-2">
+                <!-- Add Points -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-plus-circle icon" style="color: var(--success);"></i>
+                            Tích điểm
+                        </div>
+                    </div>
+                    <form id="addPointsForm">
+                        <div class="form-group">
+                            <label class="form-label">Chọn khách hàng *</label>
+                            <select class="form-input form-select" id="pointsCustomerId" required>
+                                <option value="">-- Chọn khách hàng --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Số tiền mua hàng (VND) *</label>
+                            <input type="number" class="form-input" id="purchaseAmount" required placeholder="500000" min="1000">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Mã hóa đơn</label>
+                            <input type="text" class="form-input" id="invoiceCode" placeholder="INV001">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Ghi chú</label>
+                            <input type="text" class="form-input" id="pointsNote" placeholder="Ghi chú...">
+                        </div>
+                        <button type="submit" class="btn btn-success" style="width: 100%;">
+                            <i class="fas fa-coins"></i> Tích điểm
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Use Points -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-minus-circle icon" style="color: var(--accent);"></i>
+                            Sử dụng điểm
+                        </div>
+                    </div>
+                    <form id="usePointsForm">
+                        <div class="form-group">
+                            <label class="form-label">Chọn khách hàng *</label>
+                            <select class="form-input form-select" id="usePointsCustomerId" required onchange="showCustomerPoints()">
+                                <option value="">-- Chọn khách hàng --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Điểm hiện có</label>
+                            <div id="currentPointsDisplay" style="padding: 14px 16px; background: var(--bg-input); border-radius: 8px; font-size: 1.25rem; font-weight: 600; color: var(--accent);">
+                                0 điểm
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Số điểm muốn sử dụng *</label>
+                            <input type="number" class="form-input" id="pointsToUse" required placeholder="100" min="1">
+                        </div>
+                        <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 16px;">
+                            💡 1 điểm = 1,000 VND giảm giá
+                        </p>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; background: linear-gradient(135deg, var(--accent), #d97706);">
+                            <i class="fas fa-gift"></i> Đổi điểm
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Ranks -->
+        <div class="tab-content" id="tab-ranks">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-crown icon"></i>
+                        Hệ thống hạng thành viên
+                    </div>
+                </div>
+                <div class="grid grid-5" id="ranksContainer" style="grid-template-columns: repeat(5, 1fr);">
+                    <!-- Ranks loaded by JS -->
+                </div>
+            </div>
+
+            <!-- Rank Statistics -->
+            <div class="card" style="margin-top: 24px;">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-chart-pie icon"></i>
+                        Thống kê theo hạng
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Hạng</th>
+                                <th>Số khách hàng</th>
+                                <th>Điểm tối thiểu</th>
+                                <th>Ưu đãi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rankStatsBody">
+                            <!-- Data loaded by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Customer Modal -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Chỉnh sửa khách hàng</h2>
+                <button class="modal-close" onclick="closeEditModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="editCustomerForm">
+                <input type="hidden" id="editCustomerId">
+                <div class="form-group">
+                    <label class="form-label">Họ và tên *</label>
+                    <input type="text" class="form-input" id="editFullName" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Số điện thoại *</label>
+                    <input type="tel" class="form-input" id="editPhone" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="editEmail">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Địa chỉ</label>
+                    <input type="text" class="form-input" id="editAddress">
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Hủy</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Cập nhật
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Chi tiết khách hàng</h2>
+                <button class="modal-close" onclick="closeDetailModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="customerDetailContent">
+                <!-- Content loaded by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
