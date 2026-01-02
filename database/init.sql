@@ -1,10 +1,3 @@
--- =====================================================
--- MINI SUPERMARKET SOA - COMPLETE DATABASE SCRIPT
--- Chạy script này trong MySQL Workbench
--- Version: 2.0 - Updated with all columns
--- =====================================================
-
--- Tạo các databases
 CREATE DATABASE IF NOT EXISTS product_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE IF NOT EXISTS inventory_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE IF NOT EXISTS sales_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -13,9 +6,7 @@ CREATE DATABASE IF NOT EXISTS customer_db CHARACTER SET utf8mb4 COLLATE utf8mb4_
 CREATE DATABASE IF NOT EXISTS employee_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE IF NOT EXISTS auth_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- =====================================================
--- PRODUCT DATABASE
--- =====================================================
+
 USE product_db;
 
 -- Xóa bảng cũ nếu tồn tại (để tạo lại với cấu trúc mới)
@@ -56,9 +47,7 @@ INSERT INTO products (sku, barcode, name, description, category, unit, cost_pric
 ('SP009', '8934567890009', 'Bột giặt OMO 3kg', 'Bột giặt siêu sạch', 'Đồ gia dụng', 'gói', 95000, 120000, NULL, NULL, NULL),
 ('SP010', '8934567890010', 'Khăn giấy Kleenex 100 tờ', 'Khăn giấy mềm mịn', 'Đồ gia dụng', 'hộp', 25000, 35000, NULL, NULL, NULL);
 
--- =====================================================
--- INVENTORY DATABASE
--- =====================================================
+
 USE inventory_db;
 
 DROP TABLE IF EXISTS inventory_movements;
@@ -94,13 +83,13 @@ CREATE TABLE inventory_movements (
 INSERT INTO inventory (product_id, quantity, min_quantity, max_quantity, location) VALUES
 (1, 150, 20, 500, 'Kệ A1 - Tủ lạnh'),
 (2, 500, 50, 2000, 'Kệ B1 - Thực phẩm khô'),
-(3, 25, 30, 1000, 'Kệ C1 - Nước giải khát'),      -- SẮP HẾT: quantity < min
+(3, 25, 30, 1000, 'Kệ C1 - Nước giải khát'),      
 (4, 80, 15, 300, 'Kệ A2 - Dầu ăn'),
-(5, 8, 10, 200, 'Kho chính - Gạo'),                -- SẮP HẾT: quantity < min
-(6, 15, 20, 500, 'Kệ D1 - Bánh kẹo'),              -- SẮP HẾT: quantity < min
+(5, 8, 10, 200, 'Kho chính - Gạo'),                
+(6, 15, 20, 500, 'Kệ D1 - Bánh kẹo'),              
 (7, 60, 10, 200, 'Kệ A3 - Gia vị'),
 (8, 100, 20, 400, 'Tủ lạnh 1 - Sữa chua'),
-(9, 5, 10, 150, 'Kệ E1 - Đồ gia dụng'),            -- SẮP HẾT: quantity < min
+(9, 5, 10, 150, 'Kệ E1 - Đồ gia dụng'),            
 (10, 200, 30, 800, 'Kệ F1 - Đồ gia dụng');
 
 -- Dữ liệu mẫu lịch sử di chuyển kho (nhiều records để test tab "Lịch Sử")
@@ -127,9 +116,7 @@ INSERT INTO inventory_movements (product_id, movement_type, quantity, reference,
 (10, 'in', 250, 'PO-20260102006', 'Nhập giấy vệ sinh', '2026-01-02 10:30:00'),
 (10, 'out', 50, 'INV-20260102-0006', 'Bán hàng', '2026-01-02 19:00:00');
 
--- =====================================================
--- SALES DATABASE
--- =====================================================
+
 USE sales_db;
 
 DROP TABLE IF EXISTS invoice_details;
@@ -139,6 +126,7 @@ CREATE TABLE invoices (
     id INT AUTO_INCREMENT PRIMARY KEY,
     invoice_number VARCHAR(50) NOT NULL UNIQUE,
     customer_id INT,
+    customer_phone VARCHAR(20),
     employee_id INT,
     subtotal FLOAT DEFAULT 0,
     discount FLOAT DEFAULT 0,
@@ -188,9 +176,7 @@ INSERT INTO invoice_details (invoice_id, product_id, product_name, product_sku, 
 (4, 8, 'Sữa chua Vinamilk lốc 4', 'SP008', 2, 28000, 56000),
 (5, 7, 'Nước mắm Phú Quốc 500ml', 'SP007', 1, 55000, 55000);
 
--- =====================================================
--- SUPPLIER DATABASE
--- =====================================================
+
 USE supplier_db;
 
 DROP TABLE IF EXISTS purchase_order_details;
@@ -247,6 +233,8 @@ CREATE TABLE purchase_order_details (
     INDEX idx_order (order_id)
 );
 
+ALTER TABLE supplier_db.purchase_orders 
+ADD COLUMN paid_at DATETIME;
 -- Dữ liệu mẫu nhà cung cấp
 INSERT INTO suppliers (code, name, contact_person, phone, email, address, tax_code) VALUES
 ('NCC001', 'Công ty TNHH Vinamilk', 'Nguyễn Văn A', '028-1234567', 'sales@vinamilk.com', '10 Tân Trào, Quận 7, TP.HCM', '0301234567'),
@@ -267,9 +255,7 @@ INSERT INTO purchase_order_details (order_id, product_id, product_name, quantity
 (3, 3, 'Nước ngọt Coca Cola lon 330ml', 250, 8000, 2000000, 0),
 (4, 5, 'Gạo ST25 5kg', 50, 120000, 6000000, 0);
 
--- =====================================================
--- CUSTOMER DATABASE
--- =====================================================
+
 USE customer_db;
 
 DROP TABLE IF EXISTS purchase_history;
@@ -342,9 +328,7 @@ INSERT INTO purchase_history (customer_id, invoice_number, total_amount, points_
 (2, 'INV-20260101-0002', 240000, 240, 0, 10000),
 (3, 'INV-20260102-0001', 180000, 180, 0, 0);
 
--- =====================================================
--- EMPLOYEE DATABASE
--- =====================================================
+
 USE employee_db;
 
 DROP TABLE IF EXISTS employee_shifts;
@@ -439,9 +423,7 @@ INSERT INTO employee_shifts (employee_id, shift_id, work_date, status) VALUES
 (4, 2, CURDATE(), 'scheduled'),
 (5, 2, CURDATE(), 'scheduled');
 
--- =====================================================
--- AUTH DATABASE
--- =====================================================
+
 USE auth_db;
 
 DROP TABLE IF EXISTS refresh_tokens;
@@ -499,8 +481,14 @@ INSERT INTO users (username, email, password_hash, full_name, role_id, employee_
 ('thu.tran', 'thu.tran@supermarket.com', 'scrypt:32768:8:1$TKwGxVPCZW4bGw0e$7d8f5b3c2a1e9f0d8c7b6a5e4d3c2b1a0f9e8d7c6b5a4d3c2b1a0f9e8d7c6b5a', 'Trần Thị Thu', 3, 2),
 ('kho.le', 'kho.le@supermarket.com', 'scrypt:32768:8:1$TKwGxVPCZW4bGw0e$7d8f5b3c2a1e9f0d8c7b6a5e4d3c2b1a0f9e8d7c6b5a4d3c2b1a0f9e8d7c6b5a', 'Lê Văn Kho', 3, 3);
 
--- =====================================================
--- HOÀN THÀNH!
--- =====================================================
+ALTER TABLE employee_db.employees 
+ADD COLUMN address TEXT,
+ADD COLUMN date_of_birth DATE,
+ADD COLUMN gender VARCHAR(10),
+ADD COLUMN id_card VARCHAR(20),
+ADD COLUMN hire_date DATE;
+
+ALTER TABLE employee_db.employees ADD COLUMN id_card VARCHAR(20);
+
 SELECT 'Database setup completed successfully!' AS Status;
 SELECT 'All 7 databases have been created with sample data.' AS Info;
