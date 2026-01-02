@@ -1,0 +1,233 @@
+{% extends "staff-base.html" %}
+
+{% block title %}Khách Hàng - Nhân Viên{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="bi bi-people"></i> Danh Sách Khách Hàng</h1>
+        <p>Tra cứu thông tin khách hàng <span class="badge bg-secondary">Chỉ xem</span></p>
+    </div>
+</div>
+
+<!-- Search & Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Tìm theo tên, SĐT, email...">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="rankFilter">
+                    <option value="">Tất cả hạng thành viên</option>
+                    <option value="Bronze">Bronze</option>
+                    <option value="Silver">Silver</option>
+                    <option value="Gold">Gold</option>
+                    <option value="Platinum">Platinum</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary w-100" onclick="loadCustomers()">
+                    <i class="bi bi-search"></i> Tìm kiếm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Customer List -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-list-ul"></i> Danh Sách Khách Hàng
+        <span class="badge bg-light text-dark float-end" id="totalCount">0 khách hàng</span>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover" id="customersTable">
+                <thead>
+                    <tr>
+                        <th>Mã KH</th>
+                        <th>Họ tên</th>
+                        <th>Số điện thoại</th>
+                        <th>Email</th>
+                        <th>Điểm tích lũy</th>
+                        <th>Hạng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">
+                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                            Đang tải...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Customer Detail Modal (View Only) -->
+<div class="modal fade" id="customerDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-person-lines-fill"></i> Chi Tiết Khách Hàng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Mã khách hàng:</strong> <span id="detailCode">--</span></p>
+                        <p><strong>Họ tên:</strong> <span id="detailName">--</span></p>
+                        <p><strong>Số điện thoại:</strong> <span id="detailPhone">--</span></p>
+                        <p><strong>Email:</strong> <span id="detailEmail">--</span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Địa chỉ:</strong> <span id="detailAddress">--</span></p>
+                        <p><strong>Điểm tích lũy:</strong> <span id="detailPoints">--</span></p>
+                        <p><strong>Hạng thành viên:</strong> <span id="detailRank">--</span></p>
+                        <p><strong>Ngày tham gia:</strong> <span id="detailJoinDate">--</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let allCustomers = [];
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadCustomers();
+
+        // Search on enter
+        document.getElementById('searchInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') loadCustomers();
+        });
+    });
+
+    async function loadCustomers() {
+        const tbody = document.querySelector('#customersTable tbody');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-muted">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    Đang tải...
+                </td>
+            </tr>
+        `;
+
+        try {
+            const response = await fetch('/api/customers');
+            const data = await response.json();
+
+            if (data.success && data.data) {
+                allCustomers = data.data;
+                filterAndDisplay();
+            } else {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">
+                            <i class="bi bi-inbox"></i> Không có dữ liệu
+                        </td>
+                    </tr>
+                `;
+            }
+        } catch (error) {
+            console.error('Error loading customers:', error);
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-danger">
+                        <i class="bi bi-exclamation-triangle"></i> Lỗi tải dữ liệu
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    function filterAndDisplay() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const rankFilter = document.getElementById('rankFilter').value;
+
+        let filtered = allCustomers.filter(c => {
+            const matchSearch = !searchTerm ||
+                (c.full_name && c.full_name.toLowerCase().includes(searchTerm)) ||
+                (c.phone && c.phone.includes(searchTerm)) ||
+                (c.email && c.email.toLowerCase().includes(searchTerm)) ||
+                (c.code && c.code.toLowerCase().includes(searchTerm));
+
+            const matchRank = !rankFilter || c.rank === rankFilter;
+
+            return matchSearch && matchRank;
+        });
+
+        displayCustomers(filtered);
+    }
+
+    function displayCustomers(customers) {
+        const tbody = document.querySelector('#customersTable tbody');
+        document.getElementById('totalCount').textContent = `${customers.length} khách hàng`;
+
+        if (customers.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-muted">
+                        <i class="bi bi-inbox"></i> Không tìm thấy khách hàng
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = customers.map(c => `
+            <tr style="cursor: pointer;" onclick="viewCustomer(${c.id})">
+                <td><strong>${c.code || 'KH' + c.id}</strong></td>
+                <td>${c.full_name || '--'}</td>
+                <td>${c.phone || '--'}</td>
+                <td>${c.email || '--'}</td>
+                <td>${c.points || 0}</td>
+                <td>${getRankBadge(c.rank)}</td>
+            </tr>
+        `).join('');
+    }
+
+    function getRankBadge(rank) {
+        const badges = {
+            'Bronze': '<span class="badge" style="background: #cd7f32;">Bronze</span>',
+            'Silver': '<span class="badge" style="background: #c0c0c0;">Silver</span>',
+            'Gold': '<span class="badge" style="background: #ffd700; color: #333;">Gold</span>',
+            'Platinum': '<span class="badge" style="background: #e5e4e2; color: #333;">Platinum</span>'
+        };
+        return badges[rank] || '<span class="badge bg-secondary">--</span>';
+    }
+
+    function viewCustomer(id) {
+        const customer = allCustomers.find(c => c.id === id);
+        if (!customer) return;
+
+        document.getElementById('detailCode').textContent = customer.code || 'KH' + customer.id;
+        document.getElementById('detailName').textContent = customer.full_name || '--';
+        document.getElementById('detailPhone').textContent = customer.phone || '--';
+        document.getElementById('detailEmail').textContent = customer.email || '--';
+        document.getElementById('detailAddress').textContent = customer.address || '--';
+        document.getElementById('detailPoints').textContent = customer.points || 0;
+        document.getElementById('detailRank').innerHTML = getRankBadge(customer.rank);
+        document.getElementById('detailJoinDate').textContent = customer.created_at ?
+            new Date(customer.created_at).toLocaleDateString('vi-VN') : '--';
+
+        new bootstrap.Modal(document.getElementById('customerDetailModal')).show();
+    }
+
+    // Listen for filter changes
+    document.getElementById('rankFilter').addEventListener('change', filterAndDisplay);
+</script>
+{% endblock %}

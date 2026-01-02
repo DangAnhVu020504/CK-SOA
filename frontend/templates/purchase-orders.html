@@ -1,0 +1,565 @@
+{% extends "base.html" %}
+
+{% block title %}Đơn Nhập Hàng - Siêu Thị Mini{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1><i class="bi bi-clipboard-check"></i> Quản Lý Đơn Nhập Hàng</h1>
+            <p>Theo dõi và quản lý đơn đặt hàng từ nhà cung cấp</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" onclick="prepareNewPO()" data-bs-toggle="modal" data-bs-target="#poModal">
+                <i class="bi bi-plus-circle"></i> Tạo Đơn Mới
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Tìm theo số PO..."
+                        onkeypress="if(event.key==='Enter') applyFilters()">
+                    <button class="btn btn-primary" onclick="applyFilters()">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" id="supplierFilter" onchange="applyFilters()">
+                    <option value="">-- Tất Cả NCC --</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" id="statusFilter" onchange="applyFilters()">
+                    <option value="">-- Trạng Thái --</option>
+                    <option value="pending">Chờ duyệt</option>
+                    <option value="approved">Đã duyệt</option>
+                    <option value="confirmed">Đã xác nhận</option>
+                    <option value="received">Đã nhận</option>
+                    <option value="cancelled">Đã hủy</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" id="paymentFilter" onchange="applyFilters()">
+                    <option value="">-- Thanh Toán --</option>
+                    <option value="unpaid">Chưa thanh toán</option>
+                    <option value="partial">Thanh toán một phần</option>
+                    <option value="paid">Đã thanh toán</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-secondary w-100" onclick="resetFilters()">
+                    <i class="bi bi-arrow-clockwise"></i> Đặt Lại
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Purchase Orders Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-list-check"></i> Danh Sách Đơn Nhập Hàng</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Số PO</th>
+                        <th>Nhà Cung Cấp</th>
+                        <th>Ngày Tạo</th>
+                        <th>Tổng Tiền</th>
+                        <th>Thanh Toán</th>
+                        <th>Trạng Thái</th>
+                        <th>Hành Động</th>
+                    </tr>
+                </thead>
+                <tbody id="poTableBody">
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="bi bi-hourglass-split"></i> Đang tải dữ liệu...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit PO Modal -->
+<div class="modal fade" id="poModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="poModalTitle"><i class="bi bi-plus-circle"></i> Tạo Đơn Nhập Hàng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="poForm">
+                    <input type="hidden" id="poId">
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Số PO</strong></label>
+                            <input type="text" class="form-control" id="poNumber" readonly placeholder="Tự động tạo">
+                            <small class="text-muted">Mã tự động khi tạo mới</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Nhà Cung Cấp *</strong></label>
+                            <select class="form-select" id="poSupplier" required>
+                                <option value="">-- Chọn NCC --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Tổng Tiền</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="poTotalAmount" value="0" min="0"
+                                    step="1000">
+                                <span class="input-group-text">₫</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Trạng Thái</label>
+                            <select class="form-select" id="poStatus">
+                                <option value="pending">Chờ duyệt</option>
+                                <option value="approved">Đã duyệt</option>
+                                <option value="received">Đã nhận hàng</option>
+                                <option value="cancelled">Đã hủy</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Ghi Chú</label>
+                        <textarea class="form-control" id="poNote" rows="2" placeholder="Ghi chú..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i> Hủy
+                </button>
+                <button type="button" class="btn btn-primary" onclick="savePO()">
+                    <i class="bi bi-check"></i> Lưu
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PO Detail Modal -->
+<div class="modal fade" id="poDetailModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-eye"></i> Chi Tiết Đơn Nhập Hàng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="poDetailContent">
+                <!-- Loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const API_URL = 'http://localhost:5000/api';
+    let allPOData = []; // Cache for client-side filtering
+    let suppliersData = [];
+
+    const statusColors = {
+        'pending': 'warning',
+        'approved': 'info',
+        'confirmed': 'success',
+        'paid': 'success',
+        'received': 'primary',
+        'cancelled': 'danger'
+    };
+
+    const statusNames = {
+        'pending': 'Chờ duyệt',
+        'approved': 'Đã duyệt',
+        'confirmed': 'Đã xác nhận',
+        'paid': 'Đã xác nhận',
+        'received': 'Đã nhận',
+        'cancelled': 'Đã hủy'
+    };
+
+    const paymentColors = {
+        'unpaid': 'secondary',
+        'partial': 'warning',
+        'paid': 'success'
+    };
+
+    const paymentNames = {
+        'unpaid': 'Chưa thanh toán',
+        'partial': 'Thanh toán một phần',
+        'paid': 'Đã thanh toán'
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadSuppliers();
+        loadPurchaseOrders();
+    });
+
+    function loadSuppliers() {
+        fetch(`${API_URL}/suppliers?page=1&per_page=100`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    suppliersData = Array.isArray(data.data) ? data.data : (data.data.suppliers || []);
+                    populateSupplierDropdowns();
+                }
+            })
+            .catch(err => console.error('Load suppliers error:', err));
+    }
+
+    function populateSupplierDropdowns() {
+        const filterSelect = document.getElementById('supplierFilter');
+        const formSelect = document.getElementById('poSupplier');
+
+        filterSelect.innerHTML = '<option value="">-- Tất Cả NCC --</option>' +
+            suppliersData.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        formSelect.innerHTML = '<option value="">-- Chọn NCC --</option>' +
+            suppliersData.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    }
+
+    function loadPurchaseOrders() {
+        fetch(`${API_URL}/suppliers/purchase-orders?page=1&per_page=100`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    allPOData = Array.isArray(data.data) ? data.data : (data.data.purchase_orders || []);
+                    renderPOTable(allPOData);
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                document.getElementById('poTableBody').innerHTML =
+                    '<tr><td colspan="7" class="text-center text-danger">Lỗi kết nối</td></tr>';
+            });
+    }
+
+    function renderPOTable(orders) {
+        const tbody = document.getElementById('poTableBody');
+
+        if (!orders || orders.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Không có đơn nhập hàng</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = orders.map(po => {
+            const statusColor = statusColors[po.status] || 'secondary';
+            const statusName = statusNames[po.status] || po.status;
+            const paymentColor = paymentColors[po.payment_status] || 'secondary';
+            const paymentName = paymentNames[po.payment_status] || po.payment_status || 'Chưa TT';
+
+            return `
+            <tr>
+                <td><strong>${po.order_number}</strong></td>
+                <td>${po.supplier_name || 'NCC #' + po.supplier_id}</td>
+                <td>${po.created_at ? new Date(po.created_at).toLocaleDateString('vi-VN') : 'N/A'}</td>
+                <td>${new Intl.NumberFormat('vi-VN').format(po.total_amount || 0)} ₫</td>
+                <td>
+                    <span class="badge bg-${paymentColor}">${paymentName}</span>
+                </td>
+                <td>
+                    <span class="badge bg-${statusColor}">${statusName}</span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-info" onclick="viewPO(${po.id})" title="Xem">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-warning" onclick="editPO(${po.id})" title="Sửa">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deletePO(${po.id})" title="Xóa">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                    ${po.payment_status !== 'paid' ? `
+                    <button class="btn btn-sm btn-success" onclick="confirmPayment(${po.id})" title="Xác nhận thanh toán">
+                        <i class="bi bi-cash-coin"></i>
+                    </button>
+                    ` : ''}
+                </td>
+            </tr>
+        `}).join('');
+    }
+
+    // ============ SEARCH & FILTER ============
+    function applyFilters() {
+        const keyword = document.getElementById('searchInput').value.toLowerCase().trim();
+        const supplierId = document.getElementById('supplierFilter').value;
+        const status = document.getElementById('statusFilter').value;
+        const payment = document.getElementById('paymentFilter').value;
+
+        let filtered = [...allPOData];
+
+        if (keyword) {
+            filtered = filtered.filter(po =>
+                (po.order_number || '').toLowerCase().includes(keyword)
+            );
+        }
+        if (supplierId) {
+            filtered = filtered.filter(po => po.supplier_id == supplierId);
+        }
+        if (status) {
+            filtered = filtered.filter(po => po.status === status);
+        }
+        if (payment) {
+            filtered = filtered.filter(po => (po.payment_status || 'unpaid') === payment);
+        }
+
+        renderPOTable(filtered);
+    }
+
+    function resetFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('supplierFilter').value = '';
+        document.getElementById('statusFilter').value = '';
+        document.getElementById('paymentFilter').value = '';
+        renderPOTable(allPOData);
+    }
+
+    // ============ CRUD OPERATIONS ============
+    function prepareNewPO() {
+        document.getElementById('poForm').reset();
+        document.getElementById('poId').value = '';
+        document.getElementById('poNumber').value = '';
+        document.getElementById('poNumber').placeholder = 'Tự động tạo';
+        document.getElementById('poModalTitle').innerHTML = '<i class="bi bi-plus-circle"></i> Tạo Đơn Nhập Hàng';
+    }
+
+    function viewPO(id) {
+        fetch(`${API_URL}/suppliers/purchase-orders/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const po = data.data;
+                    const statusName = statusNames[po.status] || po.status;
+                    const statusColor = statusColors[po.status] || 'secondary';
+                    const paymentName = paymentNames[po.payment_status] || 'Chưa TT';
+                    const paymentColor = paymentColors[po.payment_status] || 'secondary';
+
+                    document.getElementById('poDetailContent').innerHTML = `
+                        <div class="mb-3">
+                            <strong>Số PO:</strong> <code>${po.order_number}</code>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Nhà Cung Cấp:</strong> ${po.supplier_name || 'NCC #' + po.supplier_id}
+                        </div>
+                        <div class="mb-3">
+                            <strong>Tổng Tiền:</strong> ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(po.total_amount || 0)}
+                        </div>
+                        <hr>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Trạng Thái:</strong><br>
+                                <span class="badge bg-${statusColor} fs-6">${statusName}</span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Thanh Toán:</strong><br>
+                                <span class="badge bg-${paymentColor} fs-6">${paymentName}</span>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Ngày Tạo:</strong><br>
+                                ${po.created_at ? new Date(po.created_at).toLocaleString('vi-VN') : 'N/A'}
+                            </div>
+                            <div class="col-6">
+                                <strong>Ngày Nhận:</strong><br>
+                                ${po.received_at ? new Date(po.received_at).toLocaleString('vi-VN') : 'Chưa nhận'}
+                            </div>
+                        </div>
+                        ${po.note ? `<div class="mb-0"><strong>Ghi Chú:</strong> ${po.note}</div>` : ''}
+                    `;
+                    new bootstrap.Modal(document.getElementById('poDetailModal')).show();
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Không thể tải thông tin đơn hàng');
+            });
+    }
+
+    function editPO(id) {
+        fetch(`${API_URL}/suppliers/purchase-orders/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const po = data.data;
+                    document.getElementById('poId').value = id;
+                    document.getElementById('poNumber').value = po.order_number || '';
+                    document.getElementById('poSupplier').value = po.supplier_id || '';
+                    document.getElementById('poTotalAmount').value = po.total_amount || 0;
+                    document.getElementById('poStatus').value = po.status || 'pending';
+                    document.getElementById('poNote').value = po.note || '';
+
+                    document.getElementById('poModalTitle').innerHTML = '<i class="bi bi-pencil"></i> Chỉnh Sửa Đơn Nhập';
+                    new bootstrap.Modal(document.getElementById('poModal')).show();
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Có lỗi xảy ra');
+            });
+    }
+
+    function savePO() {
+        const poId = document.getElementById('poId').value;
+        const supplierId = document.getElementById('poSupplier').value;
+
+        if (!supplierId) {
+            alert('Vui lòng chọn nhà cung cấp');
+            return;
+        }
+
+        const formData = {
+            supplier_id: parseInt(supplierId),
+            total_amount: parseFloat(document.getElementById('poTotalAmount').value) || 0,
+            status: document.getElementById('poStatus').value,
+            note: document.getElementById('poNote').value.trim()
+        };
+
+        if (poId) {
+            formData.order_number = document.getElementById('poNumber').value;
+        }
+
+        const method = poId ? 'PUT' : 'POST';
+        const url = poId ? `${API_URL}/suppliers/purchase-orders/${poId}` : `${API_URL}/suppliers/purchase-orders`;
+
+        fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert(poId ? 'Cập nhật thành công!' : 'Tạo đơn thành công!');
+                    bootstrap.Modal.getInstance(document.getElementById('poModal')).hide();
+                    loadPurchaseOrders();
+                } else {
+                    alert('Lỗi: ' + (data.message || 'Không thể lưu'));
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Có lỗi xảy ra');
+            });
+    }
+
+    function deletePO(id) {
+        const po = allPOData.find(p => p.id === id);
+        const poNumber = po ? po.order_number : 'đơn này';
+
+        if (!confirm(`Bạn chắc chắn muốn xóa "${poNumber}"?`)) {
+            return;
+        }
+
+        fetch(`${API_URL}/suppliers/purchase-orders/${id}`, { method: 'DELETE' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Xóa thành công!');
+                    loadPurchaseOrders();
+                } else {
+                    alert('Lỗi: ' + (data.message || 'Không thể xóa'));
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Có lỗi xảy ra');
+            });
+    }
+
+    // ============ STATUS UPDATES ============
+    function updateStatus(id, newStatus) {
+        fetch(`${API_URL}/suppliers/purchase-orders/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Update local cache
+                    const po = allPOData.find(p => p.id === id);
+                    if (po) po.status = newStatus;
+                } else {
+                    alert('Lỗi cập nhật trạng thái');
+                    loadPurchaseOrders();
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                loadPurchaseOrders();
+            });
+    }
+
+    function updatePaymentStatus(id, newStatus) {
+        fetch(`${API_URL}/suppliers/purchase-orders/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ payment_status: newStatus })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Update local cache
+                    const po = allPOData.find(p => p.id === id);
+                    if (po) po.payment_status = newStatus;
+                } else {
+                    alert('Lỗi cập nhật thanh toán');
+                    loadPurchaseOrders();
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                loadPurchaseOrders();
+            });
+    }
+
+    function confirmPayment(id) {
+        if (!confirm('Xác nhận đã thanh toán đơn hàng này?')) {
+            return;
+        }
+
+        // Update both payment_status and status
+        fetch(`${API_URL}/suppliers/purchase-orders/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ payment_status: 'paid', status: 'paid' })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Xác nhận thanh toán thành công!');
+                    loadPurchaseOrders();
+                } else {
+                    alert('Lỗi: ' + (data.message || 'Không thể xác nhận'));
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Có lỗi xảy ra');
+            });
+    }
+</script>
+{% endblock %}

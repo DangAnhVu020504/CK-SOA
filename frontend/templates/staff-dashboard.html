@@ -1,0 +1,200 @@
+{% extends "staff-base.html" %}
+
+{% block title %}Dashboard - Nhân Viên{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-speedometer2"></i> Dashboard Nhân Viên</h1>
+    <p>Chào mừng bạn đến với hệ thống quản lý bán hàng</p>
+</div>
+
+<!-- Quick Stats -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="stat-box info">
+            <div class="icon-circle" style="background: #3498db;">
+                <i class="bi bi-receipt"></i>
+            </div>
+            <h3 id="todaySales">--</h3>
+            <p>Hóa đơn hôm nay</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-box success">
+            <div class="icon-circle" style="background: #27ae60;">
+                <i class="bi bi-currency-dollar"></i>
+            </div>
+            <h3 id="todayRevenue">--</h3>
+            <p>Doanh thu hôm nay</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-box warning">
+            <div class="icon-circle" style="background: #f39c12;">
+                <i class="bi bi-people"></i>
+            </div>
+            <h3 id="todayCustomers">--</h3>
+            <p>Khách hàng phục vụ</p>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-lightning-charge"></i> Thao Tác Nhanh
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <a href="/sales" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-cart-plus"></i> Tạo Hóa Đơn Mới
+                        </a>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <a href="/staff/customers" class="btn btn-outline-primary btn-lg w-100">
+                            <i class="bi bi-search"></i> Tra Cứu Khách Hàng
+                        </a>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <a href="/staff/products" class="btn btn-outline-primary btn-lg w-100">
+                            <i class="bi bi-box-seam"></i> Xem Sản Phẩm
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Sales -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-clock-history"></i> Hóa Đơn Gần Đây</span>
+                <a href="/sales" class="btn btn-sm btn-light">Xem tất cả</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="recentSalesTable">
+                        <thead>
+                            <tr>
+                                <th>Mã HĐ</th>
+                                <th>Khách hàng</th>
+                                <th>Tổng tiền</th>
+                                <th>Trạng thái</th>
+                                <th>Thời gian</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                    Đang tải...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        loadDashboardData();
+    });
+
+    async function loadDashboardData() {
+        try {
+            // Load today's sales
+            const salesResponse = await fetch('/api/sales/invoices');
+            const salesData = await salesResponse.json();
+
+            if (salesData.success && salesData.data) {
+                const today = new Date().toISOString().split('T')[0];
+                const todayInvoices = salesData.data.filter(inv =>
+                    inv.created_at && inv.created_at.startsWith(today)
+                );
+
+                document.getElementById('todaySales').textContent = todayInvoices.length;
+
+                const paidInvoices = todayInvoices.filter(inv => inv.status === 'paid');
+                const totalRevenue = paidInvoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0);
+                document.getElementById('todayRevenue').textContent = formatCurrency(totalRevenue);
+
+                // Count unique customers today
+                const uniqueCustomers = new Set(todayInvoices.map(inv => inv.customer_id).filter(id => id));
+                document.getElementById('todayCustomers').textContent = uniqueCustomers.size;
+
+                // Display recent sales
+                displayRecentSales(salesData.data.slice(0, 5));
+            }
+        } catch (error) {
+            console.error('Error loading dashboard data:', error);
+            document.getElementById('todaySales').textContent = '0';
+            document.getElementById('todayRevenue').textContent = '0 ₫';
+            document.getElementById('todayCustomers').textContent = '0';
+        }
+    }
+
+    function displayRecentSales(invoices) {
+        const tbody = document.querySelector('#recentSalesTable tbody');
+
+        if (!invoices || invoices.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center text-muted">
+                        <i class="bi bi-inbox"></i> Chưa có hóa đơn nào
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = invoices.map(inv => `
+            <tr>
+                <td><strong>${inv.invoice_number || '--'}</strong></td>
+                <td>${inv.customer_name || 'Khách lẻ'}</td>
+                <td>${formatCurrency(inv.total_amount || 0)}</td>
+                <td>${getStatusBadge(inv.status)}</td>
+                <td>${formatDateTime(inv.created_at)}</td>
+            </tr>
+        `).join('');
+    }
+
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND'
+        }).format(amount);
+    }
+
+    function formatDateTime(dateStr) {
+        if (!dateStr) return '--';
+        const date = new Date(dateStr);
+        return date.toLocaleString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    function getStatusBadge(status) {
+        const badges = {
+            'draft': '<span class="badge bg-secondary">Nháp</span>',
+            'pending': '<span class="badge bg-warning">Chờ TT</span>',
+            'paid': '<span class="badge bg-success">Đã TT</span>',
+            'cancelled': '<span class="badge bg-danger">Hủy</span>'
+        };
+        return badges[status] || `<span class="badge bg-secondary">${status}</span>`;
+    }
+</script>
+{% endblock %}

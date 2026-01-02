@@ -1,0 +1,430 @@
+{% extends "base.html" %}
+
+{% block title %}Quản Lý Nhà Cung Cấp - Siêu Thị Mini{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1><i class="bi bi-truck"></i> Quản Lý Nhà Cung Cấp</h1>
+            <p>Quản lý thông tin nhà cung cấp</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" onclick="prepareNewSupplier()" data-bs-toggle="modal"
+                data-bs-target="#supplierModal">
+                <i class="bi bi-plus-circle"></i> Thêm NCC
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="searchSupplier"
+                        placeholder="Tìm kiếm theo mã, tên, điện thoại..."
+                        onkeypress="if(event.key==='Enter') searchSuppliers()">
+                    <button class="btn btn-primary" onclick="searchSuppliers()">
+                        <i class="bi bi-search"></i> Tìm
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="statusFilter" onchange="filterByStatus()">
+                    <option value="">-- Tất Cả Trạng Thái --</option>
+                    <option value="active">Đang hoạt động</option>
+                    <option value="inactive">Ngừng hoạt động</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-secondary w-100" onclick="resetFilters()">
+                    <i class="bi bi-arrow-clockwise"></i> Đặt Lại
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Suppliers Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-building"></i> Danh Sách Nhà Cung Cấp</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Mã NCC</th>
+                        <th>Tên Nhà Cung Cấp</th>
+                        <th>Người Liên Hệ</th>
+                        <th>Điện Thoại</th>
+                        <th>Email</th>
+                        <th>Địa Chỉ</th>
+                        <th>Hành Động</th>
+                    </tr>
+                </thead>
+                <tbody id="suppliersTableBody">
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">Đang tải...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Supplier Modal -->
+<div class="modal fade" id="supplierModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="supplierModalTitle"><i class="bi bi-plus-circle"></i> Thêm Nhà Cung Cấp</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="supplierForm">
+                    <input type="hidden" id="supplierId">
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label"><strong>Mã NCC *</strong></label>
+                            <input type="text" class="form-control" id="supplierCode" required placeholder="VD: NCC006">
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label"><strong>Tên Nhà Cung Cấp *</strong></label>
+                            <input type="text" class="form-control" id="supplierName" required
+                                placeholder="Tên công ty nhà cung cấp">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Người Liên Hệ</label>
+                            <input type="text" class="form-control" id="supplierContactPerson"
+                                placeholder="Họ tên người liên hệ">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Điện Thoại</label>
+                            <input type="tel" class="form-control" id="supplierPhone" placeholder="Số điện thoại">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="supplierEmail" placeholder="Email liên hệ">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Địa Chỉ</label>
+                        <textarea class="form-control" id="supplierAddress" rows="2"
+                            placeholder="Địa chỉ đầy đủ của nhà cung cấp"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i> Hủy
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveSupplier()">
+                    <i class="bi bi-check"></i> Lưu
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Supplier Detail Modal -->
+<div class="modal fade" id="viewSupplierModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-eye"></i> Chi Tiết Nhà Cung Cấp</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="viewSupplierContent">
+                <!-- Content loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const API_URL = 'http://localhost:5000/api';
+    let allSuppliersData = []; // Cache for client-side filtering
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadSuppliers();
+    });
+
+    function loadSuppliers() {
+        fetch(`${API_URL}/suppliers?page=1&per_page=100`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    allSuppliersData = Array.isArray(data.data) ? data.data : (data.data.suppliers || []);
+                    renderSuppliersTable(allSuppliersData);
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                document.getElementById('suppliersTableBody').innerHTML =
+                    '<tr><td colspan="7" class="text-center text-danger">Lỗi kết nối</td></tr>';
+            });
+    }
+
+    function renderSuppliersTable(suppliers) {
+        const tbody = document.getElementById('suppliersTableBody');
+
+        if (!suppliers || suppliers.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Không có NCC</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = suppliers.map(s => `
+            <tr>
+                <td><strong>${s.code || s.supplier_code || 'N/A'}</strong></td>
+                <td>${s.name}</td>
+                <td>${s.contact_person || 'N/A'}</td>
+                <td>${s.phone || 'N/A'}</td>
+                <td>${s.email || 'N/A'}</td>
+                <td class="text-truncate" style="max-width: 200px;" title="${s.address || ''}">${s.address || 'N/A'}</td>
+                <td>
+                    <button class="btn btn-sm btn-info" onclick="viewSupplier(${s.id})" title="Xem">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-warning" onclick="editSupplier(${s.id})" title="Sửa">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteSupplier(${s.id})" title="Xóa">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // ============ SEARCH & FILTER ============
+    function searchSuppliers() {
+        const keyword = document.getElementById('searchSupplier').value.toLowerCase().trim();
+
+        if (!keyword) {
+            applyAllFilters();
+            return;
+        }
+
+        applyAllFilters();
+    }
+
+    function filterByStatus() {
+        applyAllFilters();
+    }
+
+    function applyAllFilters() {
+        const keyword = document.getElementById('searchSupplier').value.toLowerCase().trim();
+        const statusFilter = document.getElementById('statusFilter').value;
+
+        let filtered = [...allSuppliersData];
+
+        // Filter by keyword
+        if (keyword) {
+            filtered = filtered.filter(s => {
+                const code = (s.code || '').toLowerCase();
+                const name = (s.name || '').toLowerCase();
+                const phone = (s.phone || '').toLowerCase();
+                const email = (s.email || '').toLowerCase();
+                const contact = (s.contact_person || '').toLowerCase();
+                return code.includes(keyword) ||
+                    name.includes(keyword) ||
+                    phone.includes(keyword) ||
+                    email.includes(keyword) ||
+                    contact.includes(keyword);
+            });
+        }
+
+        // Filter by status
+        if (statusFilter) {
+            filtered = filtered.filter(s => {
+                if (statusFilter === 'active') return s.is_active !== false;
+                if (statusFilter === 'inactive') return s.is_active === false;
+                return true;
+            });
+        }
+
+        renderSuppliersTable(filtered);
+    }
+
+    function resetFilters() {
+        document.getElementById('searchSupplier').value = '';
+        document.getElementById('statusFilter').value = '';
+        renderSuppliersTable(allSuppliersData);
+    }
+
+    // ============ CRUD OPERATIONS ============
+    function prepareNewSupplier() {
+        document.getElementById('supplierForm').reset();
+        document.getElementById('supplierId').value = '';
+        document.getElementById('supplierModalTitle').innerHTML = '<i class="bi bi-plus-circle"></i> Thêm Nhà Cung Cấp';
+        generateNextCode();
+    }
+
+    function generateNextCode() {
+        // Tự động tạo mã NCC tiếp theo
+        if (allSuppliersData.length > 0) {
+            const codes = allSuppliersData.map(s => s.code || '').filter(c => c.startsWith('NCC'));
+            if (codes.length > 0) {
+                const maxNum = Math.max(...codes.map(c => parseInt(c.replace('NCC', '')) || 0));
+                document.getElementById('supplierCode').value = 'NCC' + String(maxNum + 1).padStart(3, '0');
+            } else {
+                document.getElementById('supplierCode').value = 'NCC006';
+            }
+        } else {
+            document.getElementById('supplierCode').value = 'NCC001';
+        }
+    }
+
+    function viewSupplier(id) {
+        fetch(`${API_URL}/suppliers/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const s = data.data;
+                    document.getElementById('viewSupplierContent').innerHTML = `
+                        <div class="mb-3">
+                            <strong>Mã NCC:</strong> <code>${s.code}</code>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Tên NCC:</strong> ${s.name}
+                        </div>
+                        <div class="mb-3">
+                            <strong>Người Liên Hệ:</strong> ${s.contact_person || 'N/A'}
+                        </div>
+                        <div class="mb-3">
+                            <strong>Điện Thoại:</strong> ${s.phone || 'N/A'}
+                        </div>
+                        <div class="mb-3">
+                            <strong>Email:</strong> ${s.email || 'N/A'}
+                        </div>
+                        <div class="mb-3">
+                            <strong>Địa Chỉ:</strong> ${s.address || 'N/A'}
+                        </div>
+                        <div class="mb-0">
+                            <strong>Trạng Thái:</strong> 
+                            <span class="badge ${s.is_active !== false ? 'bg-success' : 'bg-secondary'}">
+                                ${s.is_active !== false ? 'Hoạt động' : 'Ngừng'}
+                            </span>
+                        </div>
+                    `;
+                    new bootstrap.Modal(document.getElementById('viewSupplierModal')).show();
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Không thể tải thông tin nhà cung cấp');
+            });
+    }
+
+    function editSupplier(id) {
+        fetch(`${API_URL}/suppliers/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const s = data.data;
+                    document.getElementById('supplierId').value = id;
+                    document.getElementById('supplierCode').value = s.code || '';
+                    document.getElementById('supplierName').value = s.name || '';
+                    document.getElementById('supplierContactPerson').value = s.contact_person || '';
+                    document.getElementById('supplierPhone').value = s.phone || '';
+                    document.getElementById('supplierEmail').value = s.email || '';
+                    document.getElementById('supplierAddress').value = s.address || '';
+
+                    document.getElementById('supplierModalTitle').innerHTML = '<i class="bi bi-pencil"></i> Chỉnh Sửa NCC';
+                    new bootstrap.Modal(document.getElementById('supplierModal')).show();
+                } else {
+                    alert('Không thể tải thông tin nhà cung cấp');
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Có lỗi xảy ra');
+            });
+    }
+
+    function saveSupplier() {
+        const supplierId = document.getElementById('supplierId').value;
+        const code = document.getElementById('supplierCode').value.trim();
+        const name = document.getElementById('supplierName').value.trim();
+
+        if (!code || !name) {
+            alert('Vui lòng nhập mã và tên nhà cung cấp');
+            return;
+        }
+
+        const formData = {
+            code: code,
+            name: name,
+            contact_person: document.getElementById('supplierContactPerson').value.trim(),
+            phone: document.getElementById('supplierPhone').value.trim(),
+            email: document.getElementById('supplierEmail').value.trim(),
+            address: document.getElementById('supplierAddress').value.trim()
+        };
+
+        const method = supplierId ? 'PUT' : 'POST';
+        const url = supplierId ? `${API_URL}/suppliers/${supplierId}` : `${API_URL}/suppliers`;
+
+        fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert(supplierId ? 'Cập nhật thành công!' : 'Thêm nhà cung cấp thành công!');
+                    bootstrap.Modal.getInstance(document.getElementById('supplierModal')).hide();
+                    document.getElementById('supplierForm').reset();
+                    document.getElementById('supplierId').value = '';
+                    loadSuppliers();
+                } else {
+                    alert('Lỗi: ' + (data.message || 'Không thể lưu'));
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Có lỗi xảy ra, vui lòng thử lại');
+            });
+    }
+
+    function deleteSupplier(id) {
+        const supplier = allSuppliersData.find(s => s.id === id);
+        const supplierName = supplier ? supplier.name : 'nhà cung cấp này';
+
+        if (!confirm(`Bạn chắc chắn muốn xóa "${supplierName}"?`)) {
+            return;
+        }
+
+        fetch(`${API_URL}/suppliers/${id}`, { method: 'DELETE' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Xóa thành công!');
+                    loadSuppliers();
+                } else {
+                    alert('Lỗi: ' + (data.message || 'Không thể xóa'));
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Có lỗi xảy ra');
+            });
+    }
+</script>
+{% endblock %}

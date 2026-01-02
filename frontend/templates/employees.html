@@ -1,0 +1,535 @@
+{% extends "base.html" %}
+
+{% block title %}Quản Lý Nhân Viên - Siêu Thị Mini{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1><i class="bi bi-person-badge"></i> Quản Lý Nhân Viên</h1>
+            <p>Quản lý thông tin nhân viên trong hệ thống</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" onclick="prepareNewEmployee()" data-bs-toggle="modal"
+                data-bs-target="#employeeModal">
+                <i class="bi bi-plus-circle"></i> Thêm Nhân Viên
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="searchInput"
+                        placeholder="Tìm kiếm theo tên, mã NV, email..."
+                        onkeypress="if(event.key==='Enter') searchEmployees()">
+                    <button class="btn btn-primary" onclick="searchEmployees()">
+                        <i class="bi bi-search"></i> Tìm
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="roleFilter" onchange="applyFilters()">
+                    <option value="">-- Tất Cả Vai Trò --</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" id="statusFilter" onchange="applyFilters()">
+                    <option value="">-- Trạng Thái --</option>
+                    <option value="active">Đang làm</option>
+                    <option value="inactive">Đã nghỉ</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-secondary w-100" onclick="resetFilters()">
+                    <i class="bi bi-arrow-clockwise"></i> Đặt Lại
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Employees Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-people-fill"></i> Danh Sách Nhân Viên</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Mã NV</th>
+                        <th>Họ Tên</th>
+                        <th>Email</th>
+                        <th>Số Điện Thoại</th>
+                        <th>Vai Trò</th>
+                        <th>Lương CB</th>
+                        <th>Trạng Thái</th>
+                        <th>Hành Động</th>
+                    </tr>
+                </thead>
+                <tbody id="employeesTableBody">
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            <i class="bi bi-hourglass-split"></i> Đang tải dữ liệu...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Employee Modal -->
+<div class="modal fade" id="employeeModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="employeeModalTitle"><i class="bi bi-plus-circle"></i> Thêm Nhân Viên Mới
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="employeeForm">
+                    <input type="hidden" id="employeeId">
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label"><strong>Mã NV</strong></label>
+                            <input type="text" class="form-control" id="employeeCode" readonly
+                                placeholder="Tự động tạo">
+                            <small class="text-muted">Mã tự động khi thêm mới</small>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label"><strong>Họ Tên *</strong></label>
+                            <input type="text" class="form-control" id="employeeName" required
+                                placeholder="Nguyễn Văn A">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="employeeEmail" placeholder="email@example.com">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Số Điện Thoại</label>
+                            <input type="tel" class="form-control" id="employeePhone" placeholder="0901234567">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Địa Chỉ</label>
+                        <textarea class="form-control" id="employeeAddress" rows="2"
+                            placeholder="Địa chỉ đầy đủ"></textarea>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Ngày Sinh</label>
+                            <input type="date" class="form-control" id="employeeBirthDate">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Giới Tính</label>
+                            <select class="form-select" id="employeeGender">
+                                <option value="">-- Chọn --</option>
+                                <option value="male">Nam</option>
+                                <option value="female">Nữ</option>
+                                <option value="other">Khác</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">CMND/CCCD</label>
+                            <input type="text" class="form-control" id="employeeIdCard" placeholder="001234567890">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label"><strong>Vai Trò *</strong></label>
+                            <select class="form-select" id="employeeRole" required>
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Ngày Vào Làm</label>
+                            <input type="date" class="form-control" id="employeeHireDate">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Lương Cơ Bản</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="employeeSalary" step="100000" value="0"
+                                    min="0">
+                                <span class="input-group-text">₫</span>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i> Hủy
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveEmployee()">
+                    <i class="bi bi-check"></i> Lưu
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-eye"></i> Chi Tiết Nhân Viên</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detailContent">
+                <!-- Loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const API_URL = 'http://localhost:5000/api';
+    let allEmployeesData = []; // Cache for client-side filtering
+    let rolesData = []; // Cache roles
+
+    const roleColors = {
+        'Quản lý': 'danger',
+        'Manager': 'danger',
+        'Administrator': 'danger',
+        'Thu ngân': 'info',
+        'Cashier': 'info',
+        'Kho': 'warning',
+        'Warehouse': 'warning',
+        'Bán hàng': 'secondary',
+        'Staff': 'secondary',
+        'Sales': 'secondary'
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadRoles();
+        loadEmployees();
+    });
+
+    function loadRoles() {
+        fetch(`${API_URL}/employees/roles`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    rolesData = data.data || [];
+                    populateRoleDropdowns();
+                }
+            })
+            .catch(err => console.error('Load roles error:', err));
+    }
+
+    function populateRoleDropdowns() {
+        // Form dropdown
+        const formSelect = document.getElementById('employeeRole');
+        formSelect.innerHTML = rolesData.map(r =>
+            `<option value="${r.id}">${r.name}</option>`
+        ).join('');
+
+        // Filter dropdown
+        const filterSelect = document.getElementById('roleFilter');
+        filterSelect.innerHTML = '<option value="">-- Tất Cả Vai Trò --</option>' +
+            rolesData.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+    }
+
+    function loadEmployees() {
+        fetch(`${API_URL}/employees?page=1&per_page=100`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    allEmployeesData = Array.isArray(data.data) ? data.data : (data.data.employees || []);
+                    renderEmployeesTable(allEmployeesData);
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                document.getElementById('employeesTableBody').innerHTML =
+                    '<tr><td colspan="8" class="text-center text-danger">Lỗi kết nối</td></tr>';
+            });
+    }
+
+    function renderEmployeesTable(employees) {
+        const tbody = document.getElementById('employeesTableBody');
+
+        if (!employees || employees.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Không có nhân viên</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = employees.map(e => {
+            const roleName = e.role || getRoleName(e.role_id) || 'N/A';
+            const roleColor = roleColors[roleName] || 'secondary';
+            return `
+                <tr>
+                    <td><strong>${e.code || e.employee_code || 'NV' + e.id}</strong></td>
+                    <td>${e.full_name || e.name}</td>
+                    <td>${e.email || 'N/A'}</td>
+                    <td>${e.phone || 'N/A'}</td>
+                    <td><span class="badge bg-${roleColor}">${roleName}</span></td>
+                    <td>${e.base_salary ? new Intl.NumberFormat('vi-VN').format(e.base_salary) + ' ₫' : 'N/A'}</td>
+                    <td>
+                        <span class="badge ${e.is_active !== false ? 'bg-success' : 'bg-danger'}">
+                            ${e.is_active !== false ? 'Đang làm' : 'Đã nghỉ'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-info" onclick="viewEmployee(${e.id})" title="Xem">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-warning" onclick="editEmployee(${e.id})" title="Sửa">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteEmployee(${e.id})" title="Xóa">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function getRoleName(roleId) {
+        const role = rolesData.find(r => r.id === roleId);
+        return role ? role.name : null;
+    }
+
+    // ============ SEARCH & FILTER ============
+    function searchEmployees() {
+        applyFilters();
+    }
+
+    function applyFilters() {
+        const keyword = document.getElementById('searchInput').value.toLowerCase().trim();
+        const roleFilter = document.getElementById('roleFilter').value;
+        const statusFilter = document.getElementById('statusFilter').value;
+
+        let filtered = [...allEmployeesData];
+
+        // Filter by keyword
+        if (keyword) {
+            filtered = filtered.filter(e => {
+                const name = (e.full_name || e.name || '').toLowerCase();
+                const code = (e.code || e.employee_code || '').toLowerCase();
+                const email = (e.email || '').toLowerCase();
+                const phone = (e.phone || '').toLowerCase();
+                return name.includes(keyword) ||
+                    code.includes(keyword) ||
+                    email.includes(keyword) ||
+                    phone.includes(keyword);
+            });
+        }
+
+        // Filter by role
+        if (roleFilter) {
+            filtered = filtered.filter(e => e.role_id == roleFilter);
+        }
+
+        // Filter by status
+        if (statusFilter) {
+            filtered = filtered.filter(e => {
+                if (statusFilter === 'active') return e.is_active !== false;
+                if (statusFilter === 'inactive') return e.is_active === false;
+                return true;
+            });
+        }
+
+        renderEmployeesTable(filtered);
+    }
+
+    function resetFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('roleFilter').value = '';
+        document.getElementById('statusFilter').value = '';
+        renderEmployeesTable(allEmployeesData);
+    }
+
+    // ============ CRUD OPERATIONS ============
+    function prepareNewEmployee() {
+        document.getElementById('employeeForm').reset();
+        document.getElementById('employeeId').value = '';
+        document.getElementById('employeeCode').value = '';
+        document.getElementById('employeeCode').placeholder = 'Tự động tạo';
+        document.getElementById('employeeModalTitle').innerHTML = '<i class="bi bi-plus-circle"></i> Thêm Nhân Viên Mới';
+    }
+
+    function viewEmployee(id) {
+        fetch(`${API_URL}/employees/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const e = data.data;
+                    const roleName = e.role || getRoleName(e.role_id) || 'N/A';
+                    const roleColor = roleColors[roleName] || 'secondary';
+
+                    const genderText = e.gender === 'male' ? 'Nam' : e.gender === 'female' ? 'Nữ' : 'N/A';
+                    document.getElementById('detailContent').innerHTML = `
+                        <div class="mb-3">
+                            <strong>Mã Nhân Viên:</strong> <code>${e.code || e.employee_code || 'NV' + e.id}</code>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Họ Tên:</strong> ${e.full_name || e.name}
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6"><strong>Email:</strong> ${e.email || 'N/A'}</div>
+                            <div class="col-6"><strong>SĐT:</strong> ${e.phone || 'N/A'}</div>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Địa Chỉ:</strong> ${e.address || 'N/A'}
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-4"><strong>Ngày Sinh:</strong><br>${e.date_of_birth ? new Date(e.date_of_birth).toLocaleDateString('vi-VN') : 'N/A'}</div>
+                            <div class="col-4"><strong>Giới Tính:</strong><br>${genderText}</div>
+                            <div class="col-4"><strong>CMND/CCCD:</strong><br>${e.id_card || 'N/A'}</div>
+                        </div>
+                        <hr>
+                        <div class="row mb-3">
+                            <div class="col-4">
+                                <strong>Vai Trò:</strong><br>
+                                <span class="badge bg-${roleColor} fs-6">${roleName}</span>
+                            </div>
+                            <div class="col-4">
+                                <strong>Ngày Vào Làm:</strong><br>
+                                ${e.hire_date ? new Date(e.hire_date).toLocaleDateString('vi-VN') : 'N/A'}
+                            </div>
+                            <div class="col-4">
+                                <strong>Lương CB:</strong><br>
+                                ${e.base_salary ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(e.base_salary) : 'N/A'}
+                            </div>
+                        </div>
+                        <div class="mb-0">
+                            <strong>Trạng Thái:</strong>
+                            <span class="badge ${e.is_active !== false ? 'bg-success' : 'bg-danger'}">
+                                ${e.is_active !== false ? 'Đang làm' : 'Đã nghỉ'}
+                            </span>
+                        </div>
+                    `;
+                    new bootstrap.Modal(document.getElementById('detailModal')).show();
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Không thể tải thông tin nhân viên');
+            });
+    }
+
+    function editEmployee(id) {
+        fetch(`${API_URL}/employees/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const e = data.data;
+                    document.getElementById('employeeId').value = id;
+                    document.getElementById('employeeCode').value = e.code || e.employee_code || '';
+                    document.getElementById('employeeName').value = e.full_name || e.name || '';
+                    document.getElementById('employeeEmail').value = e.email || '';
+                    document.getElementById('employeePhone').value = e.phone || '';
+                    document.getElementById('employeeAddress').value = e.address || '';
+                    document.getElementById('employeeBirthDate').value = e.date_of_birth || '';
+                    document.getElementById('employeeGender').value = e.gender || '';
+                    document.getElementById('employeeIdCard').value = e.id_card || '';
+                    document.getElementById('employeeRole').value = e.role_id || 1;
+                    document.getElementById('employeeHireDate').value = e.hire_date || '';
+                    document.getElementById('employeeSalary').value = e.base_salary || 0;
+
+                    document.getElementById('employeeModalTitle').innerHTML = '<i class="bi bi-pencil"></i> Chỉnh Sửa Nhân Viên';
+                    new bootstrap.Modal(document.getElementById('employeeModal')).show();
+                } else {
+                    alert('Không thể tải thông tin nhân viên');
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Có lỗi xảy ra');
+            });
+    }
+
+    function saveEmployee() {
+        const employeeId = document.getElementById('employeeId').value;
+        const fullName = document.getElementById('employeeName').value.trim();
+
+        if (!fullName) {
+            alert('Vui lòng nhập họ tên nhân viên');
+            return;
+        }
+
+        const formData = {
+            full_name: fullName,
+            email: document.getElementById('employeeEmail').value.trim(),
+            phone: document.getElementById('employeePhone').value.trim(),
+            address: document.getElementById('employeeAddress').value.trim(),
+            date_of_birth: document.getElementById('employeeBirthDate').value || null,
+            gender: document.getElementById('employeeGender').value || null,
+            id_card: document.getElementById('employeeIdCard').value.trim() || null,
+            role_id: parseInt(document.getElementById('employeeRole').value) || 1,
+            hire_date: document.getElementById('employeeHireDate').value || null,
+            base_salary: parseFloat(document.getElementById('employeeSalary').value) || 0
+        };
+
+        const method = employeeId ? 'PUT' : 'POST';
+        const url = employeeId ? `${API_URL}/employees/${employeeId}` : `${API_URL}/employees`;
+
+        fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert(employeeId ? 'Cập nhật thành công!' : 'Thêm nhân viên thành công!');
+                    bootstrap.Modal.getInstance(document.getElementById('employeeModal')).hide();
+                    loadEmployees();
+                } else {
+                    alert('Lỗi: ' + (data.message || 'Không thể lưu'));
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Có lỗi xảy ra, vui lòng thử lại');
+            });
+    }
+
+    function deleteEmployee(id) {
+        const employee = allEmployeesData.find(e => e.id === id);
+        const employeeName = employee ? employee.full_name || employee.name : 'nhân viên này';
+
+        if (!confirm(`Bạn chắc chắn muốn xóa "${employeeName}"?`)) {
+            return;
+        }
+
+        fetch(`${API_URL}/employees/${id}`, { method: 'DELETE' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Xóa thành công!');
+                    loadEmployees();
+                } else {
+                    alert('Lỗi: ' + (data.message || 'Không thể xóa'));
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Có lỗi xảy ra');
+            });
+    }
+</script>
+{% endblock %}

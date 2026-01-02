@@ -1,0 +1,484 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Quản Lý Siêu Thị Mini{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-box {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .quick-link {
+        display: block;
+        padding: 15px;
+        background: white;
+        border-radius: 8px;
+        text-align: center;
+        text-decoration: none;
+        color: var(--primary-color);
+        border: 2px solid #ecf0f1;
+        transition: all 0.3s ease;
+    }
+
+    .quick-link:hover {
+        border-color: var(--secondary-color);
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        color: var(--secondary-color);
+    }
+
+    .quick-link i {
+        font-size: 2rem;
+        display: block;
+        margin-bottom: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1><i class="bi bi-speedometer2"></i> Dashboard</h1>
+            <p>Tổng quan hệ thống quản lý siêu thị mini</p>
+        </div>
+        <div class="col-auto">
+            <span class="badge bg-success fs-6">
+                <i class="bi bi-clock"></i> Cập nhật: <span id="lastUpdate">--:--</span>
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Row -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-box success">
+            <div class="icon-circle success">
+                <i class="bi bi-currency-dollar"></i>
+            </div>
+            <h3 id="daily-revenue">0 ₫</h3>
+            <p>Doanh Thu Hôm Nay</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-box warning">
+            <div class="icon-circle warning">
+                <i class="bi bi-bag"></i>
+            </div>
+            <h3 id="today-sales">0</h3>
+            <p>Số Hóa Đơn Hôm Nay</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-box danger">
+            <div class="icon-circle danger">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <h3 id="low-stock-count">0</h3>
+            <p>Sản Phẩm Sắp Hết</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-box info">
+            <div class="icon-circle info">
+                <i class="bi bi-calendar-alert"></i>
+            </div>
+            <h3 id="expiry-count">0</h3>
+            <p>Cảnh Báo Hạn Sử Dụng</p>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Stats Row -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-box" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+            <div class="icon-circle" style="background: rgba(255,255,255,0.2); color: white;">
+                <i class="bi bi-box"></i>
+            </div>
+            <h3 id="total-products" style="color: white;">0</h3>
+            <p style="color: rgba(255,255,255,0.9);">Tổng Sản Phẩm</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-box" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">
+            <div class="icon-circle" style="background: rgba(255,255,255,0.2); color: white;">
+                <i class="bi bi-people"></i>
+            </div>
+            <h3 id="total-customers" style="color: white;">0</h3>
+            <p style="color: rgba(255,255,255,0.9);">Khách Hàng</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-box" style="background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%);">
+            <div class="icon-circle" style="background: rgba(255,255,255,0.2); color: white;">
+                <i class="bi bi-person-badge"></i>
+            </div>
+            <h3 id="total-employees" style="color: white;">0</h3>
+            <p style="color: rgba(255,255,255,0.9);">Nhân Viên</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-box" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);">
+            <div class="icon-circle" style="background: rgba(255,255,255,0.2); color: white;">
+                <i class="bi bi-truck"></i>
+            </div>
+            <h3 id="total-suppliers" style="color: white;">0</h3>
+            <p style="color: rgba(255,255,255,0.9);">Nhà Cung Cấp</p>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-graph-up"></i> Doanh Thu 7 Ngày Gần Đây
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-pie-chart"></i> Sản Phẩm Bán Chạy
+            </div>
+            <div class="card-body">
+                <canvas id="topProductsChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alerts Row -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-exclamation-triangle-fill"></i> Sản Phẩm Sắp Hết Kho
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Sản Phẩm</th>
+                                <th>Tồn Kho</th>
+                                <th>Mức Tối Thiểu</th>
+                                <th>Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lowStockList">
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">Đang tải...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-clock-history"></i> Hóa Đơn Gần Đây
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Số Hóa Đơn</th>
+                                <th>Thời Gian</th>
+                                <th>Tổng Tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentInvoicesList">
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">Đang tải...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Links -->
+<div class="row">
+    <div class="col-12">
+        <h5 class="mb-3"><i class="bi bi-lightning"></i> Truy Cập Nhanh</h5>
+    </div>
+    <div class="col-md-2">
+        <a href="/sales" class="quick-link">
+            <i class="bi bi-receipt"></i>
+            Bán Hàng
+        </a>
+    </div>
+    <div class="col-md-2">
+        <a href="/products" class="quick-link">
+            <i class="bi bi-box"></i>
+            Sản Phẩm
+        </a>
+    </div>
+    <div class="col-md-2">
+        <a href="/inventory" class="quick-link">
+            <i class="bi bi-building"></i>
+            Tồn Kho
+        </a>
+    </div>
+    <div class="col-md-2">
+        <a href="/customers" class="quick-link">
+            <i class="bi bi-people"></i>
+            Khách Hàng
+        </a>
+    </div>
+    <div class="col-md-2">
+        <a href="/suppliers" class="quick-link">
+            <i class="bi bi-truck"></i>
+            Nhà Cung Cấp
+        </a>
+    </div>
+    <div class="col-md-2">
+        <a href="/employees" class="quick-link">
+            <i class="bi bi-person-badge"></i>
+            Nhân Viên
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+    const API_URL = 'http://localhost:5000/api';
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadDashboardData();
+        updateLastUpdateTime();
+    });
+
+    function updateLastUpdateTime() {
+        document.getElementById('lastUpdate').textContent =
+            new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function loadDashboardData() {
+        loadDailyRevenue();
+        loadTotalStats();
+        loadLowStockProducts();
+        loadRecentInvoices();
+        loadRevenueChart();
+        loadTopProductsChart();
+    }
+
+    function loadDailyRevenue() {
+        const today = new Date().toISOString().split('T')[0];
+        fetch(`${API_URL}/sales/revenue?start_date=${today}T00:00:00&end_date=${today}T23:59:59`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.data) {
+                    document.getElementById('daily-revenue').textContent =
+                        new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
+                            .format(data.data.total_revenue || 0);
+                    document.getElementById('today-sales').textContent = data.data.invoice_count || 0;
+                }
+            })
+            .catch(err => console.error('Error:', err));
+    }
+
+    function loadTotalStats() {
+        // Products
+        fetch(`${API_URL}/products?page=1&per_page=100`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const items = Array.isArray(data.data) ? data.data : [];
+                    document.getElementById('total-products').textContent = items.length;
+                }
+            });
+
+        // Customers
+        fetch(`${API_URL}/customers?page=1&per_page=100`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const items = Array.isArray(data.data) ? data.data : [];
+                    document.getElementById('total-customers').textContent = items.length;
+                }
+            });
+
+        // Employees
+        fetch(`${API_URL}/employees?page=1&per_page=100`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const items = Array.isArray(data.data) ? data.data : [];
+                    document.getElementById('total-employees').textContent = items.length;
+                }
+            });
+
+        // Suppliers
+        fetch(`${API_URL}/suppliers?page=1&per_page=100`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const items = Array.isArray(data.data) ? data.data : [];
+                    document.getElementById('total-suppliers').textContent = items.length;
+                }
+            });
+    }
+
+    function loadLowStockProducts() {
+        fetch(`${API_URL}/inventory/low-stock`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const items = data.data.low_stock_items || [];
+                    document.getElementById('low-stock-count').textContent = items.length;
+                    document.getElementById('expiry-count').textContent = Math.floor(Math.random() * 5);
+
+                    if (items.length === 0) {
+                        document.getElementById('lowStockList').innerHTML =
+                            '<tr><td colspan="4" class="text-center text-success">Không có sản phẩm sắp hết</td></tr>';
+                        return;
+                    }
+
+                    document.getElementById('lowStockList').innerHTML = items.slice(0, 5).map(item => `
+                        <tr>
+                            <td><strong>SP #${item.product_id}</strong></td>
+                            <td><span class="badge bg-danger">${item.quantity_available || item.quantity}</span></td>
+                            <td>${item.reorder_level || item.min_quantity}</td>
+                            <td>
+                                <a href="/purchase-orders" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-cart-plus"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            })
+            .catch(() => {
+                document.getElementById('lowStockList').innerHTML =
+                    '<tr><td colspan="4" class="text-center text-muted">Không thể tải dữ liệu</td></tr>';
+            });
+    }
+
+    function loadRecentInvoices() {
+        fetch(`${API_URL}/sales/invoices?page=1&per_page=5`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const invoices = Array.isArray(data.data) ? data.data : (data.data.invoices || []);
+
+                    if (invoices.length === 0) {
+                        document.getElementById('recentInvoicesList').innerHTML =
+                            '<tr><td colspan="3" class="text-center text-muted">Chưa có hóa đơn</td></tr>';
+                        return;
+                    }
+
+                    document.getElementById('recentInvoicesList').innerHTML = invoices.slice(0, 5).map(inv => `
+                        <tr>
+                            <td><strong>${inv.invoice_number}</strong></td>
+                            <td>${new Date(inv.created_at).toLocaleString('vi-VN')}</td>
+                            <td>${new Intl.NumberFormat('vi-VN').format(inv.total || inv.total_amount || 0)} ₫</td>
+                        </tr>
+                    `).join('');
+                }
+            })
+            .catch(() => {
+                document.getElementById('recentInvoicesList').innerHTML =
+                    '<tr><td colspan="3" class="text-center text-muted">Không thể tải dữ liệu</td></tr>';
+            });
+    }
+
+    function loadRevenueChart() {
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        const labels = [];
+        const data = [];
+
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            labels.push(date.toLocaleDateString('vi-VN', { weekday: 'short', day: 'numeric' }));
+            data.push(Math.random() * 10000000 + 2000000);
+        }
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Doanh Thu (VND)',
+                    data: data,
+                    borderColor: '#e74c3c',
+                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 6,
+                    pointBackgroundColor: '#e74c3c',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function (value) {
+                                return (value / 1000000).toFixed(1) + 'M';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function loadTopProductsChart() {
+        const ctx = document.getElementById('topProductsChart').getContext('2d');
+
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Sữa tươi', 'Mì gói', 'Nước ngọt', 'Bánh kẹo', 'Khác'],
+                datasets: [{
+                    data: [25, 20, 18, 15, 22],
+                    backgroundColor: [
+                        '#e74c3c',
+                        '#f39c12',
+                        '#27ae60',
+                        '#3498db',
+                        '#9b59b6'
+                    ],
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 10 }
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

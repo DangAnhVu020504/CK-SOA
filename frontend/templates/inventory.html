@@ -1,0 +1,820 @@
+{% extends "base.html" %}
+
+{% block title %}Quản Lý Tồn Kho - Siêu Thị Mini{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1><i class="bi bi-building"></i> Quản Lý Tồn Kho</h1>
+            <p>Quản lý nhập, xuất và điều chỉnh hàng hóa</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#adjustModal">
+                <i class="bi bi-pencil-square"></i> Điều Chỉnh
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="searchInventory"
+                        placeholder="Tìm kiếm theo mã sản phẩm, vị trí..."
+                        onkeypress="if(event.key==='Enter') searchInventory()">
+                    <button class="btn btn-primary" onclick="searchInventory()">
+                        <i class="bi bi-search"></i> Tìm
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="locationFilter" onchange="filterByLocation()">
+                    <option value="">-- Tất Cả Vị Trí --</option>
+                    <option value="Kệ A">Kệ A</option>
+                    <option value="Kệ B">Kệ B</option>
+                    <option value="Kệ C">Kệ C</option>
+                    <option value="Kệ D">Kệ D</option>
+                    <option value="Tủ lạnh">Tủ lạnh</option>
+                    <option value="Kho chính">Kho chính</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" id="stockStatusFilter" onchange="filterByStockStatus()">
+                    <option value="">-- Trạng Thái --</option>
+                    <option value="low">Sắp hết</option>
+                    <option value="normal">Bình thường</option>
+                    <option value="high">Đầy đủ</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-secondary w-100" onclick="resetInventoryFilters()">
+                    <i class="bi bi-arrow-clockwise"></i> Đặt Lại
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-4" role="tablist">
+    <li class="nav-item">
+        <a class="nav-link active" data-bs-toggle="tab" href="#inventory-tab" role="tab">
+            <i class="bi bi-list"></i> Tồn Kho
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#low-stock-tab" role="tab">
+            <i class="bi bi-exclamation-triangle"></i> Sắp Hết
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#expiry-tab" role="tab">
+            <i class="bi bi-calendar-alert"></i> Hạn Sử Dụng
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#movements-tab" role="tab">
+            <i class="bi bi-arrow-left-right"></i> Lịch Sử
+        </a>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <!-- Inventory Tab -->
+    <div class="tab-pane fade show active" id="inventory-tab" role="tabpanel">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-box-seam"></i> Danh Sách Tồn Kho</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Mã Sản Phẩm</th>
+                                <th>Tên Sản Phẩm</th>
+                                <th>Tồn Kho</th>
+                                <th>Đã Đặt</th>
+                                <th>Có Sẵn</th>
+                                <th>Mức Tái Đặt</th>
+                                <th>Vị Trí</th>
+                                <th>Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody">
+                            <tr>
+                                <td colspan="8" class="text-center text-muted">Đang tải...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock Tab -->
+    <div class="tab-pane fade" id="low-stock-tab" role="tabpanel">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle-fill"></i> Sản Phẩm Sắp Hết Kho</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Sản Phẩm</th>
+                                <th>Tồn Kho</th>
+                                <th>Mức Tái Đặt</th>
+                                <th>Chênh Lệch</th>
+                                <th>Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lowStockTableBody">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">Đang tải...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expiry Tab -->
+    <div class="tab-pane fade" id="expiry-tab" role="tabpanel">
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="mb-0"><i class="bi bi-calendar-alert"></i> Cảnh Báo Hạn Sử Dụng</h5>
+                    </div>
+                    <div class="col-auto">
+                        <label>Hiển thị cảnh báo trong:
+                            <select class="form-select form-select-sm d-inline-block w-auto" id="expiryDaysFilter"
+                                onchange="loadExpiryWarnings()">
+                                <option value="7">7 ngày</option>
+                                <option value="14">14 ngày</option>
+                                <option value="30" selected>30 ngày</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Sản Phẩm</th>
+                                <th>Batch</th>
+                                <th>Hạn Sử Dụng</th>
+                                <th>Số Lượng</th>
+                                <th>Ngày Còn Lại</th>
+                                <th>Trạng Thái</th>
+                                <th>Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expiryTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">Đang tải...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Movements Tab -->
+    <div class="tab-pane fade" id="movements-tab" role="tabpanel">
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="mb-0">Lịch Sử Nhập/Xuất</h5>
+                    </div>
+                    <div class="col-auto">
+                        <select class="form-select form-select-sm d-inline-block w-auto" id="productFilter"
+                            onchange="loadMovements()">
+                            <option value="">-- Tất Cả Sản Phẩm --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Sản Phẩm</th>
+                                <th>Loại</th>
+                                <th>Số Lượng</th>
+                                <th>Tham Chiếu</th>
+                                <th>Ghi Chú</th>
+                                <th>Ngày Giờ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="movementsTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">Đang tải...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Adjust Modal - Redesigned -->
+<div class="modal fade" id="adjustModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-pencil-square"></i> Điều Chỉnh Tồn Kho</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="adjustForm">
+                    <!-- Chọn sản phẩm -->
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Sản Phẩm *</strong></label>
+                        <select class="form-select" id="adjustProductId" required onchange="onProductSelected()">
+                            <option value="">-- Chọn Sản Phẩm --</option>
+                        </select>
+                    </div>
+
+                    <!-- Hiển thị tồn kho hiện tại -->
+                    <div class="mb-3" id="currentStockInfo" style="display: none;">
+                        <div class="alert alert-info mb-0">
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted">Tồn kho hiện tại:</small>
+                                    <h4 class="mb-0" id="currentStock">0</h4>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Vị trí:</small>
+                                    <p class="mb-0" id="currentLocation">N/A</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loại điều chỉnh -->
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Loại Điều Chỉnh *</strong></label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="adjustType" id="typeIn" value="in">
+                            <label class="btn btn-outline-success" for="typeIn">
+                                <i class="bi bi-arrow-down-circle"></i> Nhập Kho
+                            </label>
+
+                            <input type="radio" class="btn-check" name="adjustType" id="typeOut" value="out">
+                            <label class="btn btn-outline-danger" for="typeOut">
+                                <i class="bi bi-arrow-up-circle"></i> Xuất Kho
+                            </label>
+
+                            <input type="radio" class="btn-check" name="adjustType" id="typeAdjust" value="adjust"
+                                checked>
+                            <label class="btn btn-outline-warning" for="typeAdjust">
+                                <i class="bi bi-pencil"></i> Điều Chỉnh
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Số lượng -->
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Số Lượng *</strong></label>
+                        <div class="input-group">
+                            <button class="btn btn-outline-secondary" type="button" onclick="changeAdjustQty(-10)">
+                                -10
+                            </button>
+                            <button class="btn btn-outline-secondary" type="button" onclick="changeAdjustQty(-1)">
+                                <i class="bi bi-dash"></i>
+                            </button>
+                            <input type="number" class="form-control text-center" id="adjustQuantity" value="1" min="1"
+                                required>
+                            <button class="btn btn-outline-secondary" type="button" onclick="changeAdjustQty(1)">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary" type="button" onclick="changeAdjustQty(10)">
+                                +10
+                            </button>
+                        </div>
+                        <small class="text-muted" id="adjustHint">Điều chỉnh sẽ đặt số lượng tồn kho về giá trị
+                            mới</small>
+                    </div>
+
+                    <!-- Tham chiếu (mã phiếu) -->
+                    <div class="mb-3">
+                        <label class="form-label">Mã Tham Chiếu</label>
+                        <input type="text" class="form-control" id="adjustReference"
+                            placeholder="VD: PO-20260102001, INV-20260102-0001">
+                    </div>
+
+                    <!-- Lý do -->
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Lý Do / Ghi Chú *</strong></label>
+                        <textarea class="form-control" id="adjustReason" rows="2" required
+                            placeholder="Nhập lý do điều chỉnh..."></textarea>
+                    </div>
+
+                    <!-- Preview kết quả -->
+                    <div class="mb-0" id="adjustPreview" style="display: none;">
+                        <div class="alert alert-warning mb-0">
+                            <i class="bi bi-info-circle"></i> <strong>Kết quả dự kiến:</strong>
+                            <span id="previewText">Tồn kho sẽ thay đổi từ X thành Y</span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i> Hủy
+                </button>
+                <button type="button" class="btn btn-primary" onclick="submitAdjust()">
+                    <i class="bi bi-check"></i> Xác Nhận Điều Chỉnh
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const API_URL = 'http://localhost:5000/api';
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadInventory();
+        loadLowStock();
+        loadExpiryWarnings();
+        loadMovements();
+    });
+
+    function loadInventory() {
+        fetch(`${API_URL}/inventory/all`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // API returns data.data as array directly
+                    const items = Array.isArray(data.data) ? data.data : (data.data.inventories || []);
+                    renderInventoryTable(items);
+                }
+            })
+            .catch(err => console.error('Error:', err));
+    }
+
+    function renderInventoryTable(items) {
+        const tbody = document.getElementById('inventoryTableBody');
+
+        if (!items || items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Không có dữ liệu</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = items.map(item => {
+            const isLowStock = item.is_low_stock || item.quantity <= (item.min_quantity || 10);
+            return `
+                <tr>
+                    <td><strong>#${item.product_id}</strong></td>
+                    <td>Sản phẩm ${item.product_id}</td>
+                    <td><strong>${item.quantity || item.quantity_on_hand || 0}</strong></td>
+                    <td>${item.quantity_reserved || 0}</td>
+                    <td>${item.quantity || item.quantity_available || 0}</td>
+                    <td>${item.min_quantity || item.reorder_level || 10}</td>
+                    <td>${item.location || 'N/A'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="viewMovements(${item.product_id})">
+                            <i class="bi bi-arrow-left-right"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // ============ SEARCH & FILTER FUNCTIONS ============
+    let allInventoryData = []; // Cache toàn bộ data để filter client-side
+
+    function loadInventoryWithCache() {
+        fetch(`${API_URL}/inventory/all`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    allInventoryData = Array.isArray(data.data) ? data.data : (data.data.inventories || []);
+                    renderInventoryTable(allInventoryData);
+                }
+            })
+            .catch(err => console.error('Error:', err));
+    }
+
+    function searchInventory() {
+        const keyword = document.getElementById('searchInventory').value.toLowerCase().trim();
+
+        if (!keyword) {
+            applyAllFilters();
+            return;
+        }
+
+        const filtered = allInventoryData.filter(item => {
+            const productId = String(item.product_id || '');
+            const location = (item.location || '').toLowerCase();
+            return productId.includes(keyword) || location.includes(keyword);
+        });
+
+        renderInventoryTable(filtered);
+    }
+
+    function filterByLocation() {
+        applyAllFilters();
+    }
+
+    function filterByStockStatus() {
+        applyAllFilters();
+    }
+
+    function applyAllFilters() {
+        const keyword = document.getElementById('searchInventory').value.toLowerCase().trim();
+        const locationFilter = document.getElementById('locationFilter').value;
+        const stockStatus = document.getElementById('stockStatusFilter').value;
+
+        let filtered = [...allInventoryData];
+
+        // Filter by keyword
+        if (keyword) {
+            filtered = filtered.filter(item => {
+                const productId = String(item.product_id || '');
+                const location = (item.location || '').toLowerCase();
+                return productId.includes(keyword) || location.includes(keyword);
+            });
+        }
+
+        // Filter by location
+        if (locationFilter) {
+            filtered = filtered.filter(item => {
+                const location = (item.location || '').toLowerCase();
+                return location.includes(locationFilter.toLowerCase());
+            });
+        }
+
+        // Filter by stock status
+        if (stockStatus) {
+            filtered = filtered.filter(item => {
+                const qty = item.quantity || 0;
+                const minQty = item.min_quantity || 10;
+                const maxQty = item.max_quantity || 1000;
+
+                switch (stockStatus) {
+                    case 'low':
+                        return qty <= minQty;
+                    case 'normal':
+                        return qty > minQty && qty < maxQty * 0.8;
+                    case 'high':
+                        return qty >= maxQty * 0.8;
+                    default:
+                        return true;
+                }
+            });
+        }
+
+        renderInventoryTable(filtered);
+    }
+
+    function resetInventoryFilters() {
+        document.getElementById('searchInventory').value = '';
+        document.getElementById('locationFilter').value = '';
+        document.getElementById('stockStatusFilter').value = '';
+        renderInventoryTable(allInventoryData);
+    }
+
+    // Override loadInventory để cache data
+    function loadInventory() {
+        loadInventoryWithCache();
+    }
+
+    function loadLowStock() {
+        fetch(`${API_URL}/inventory/low-stock`)
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById('lowStockTableBody');
+                if (data.success) {
+                    const items = data.data?.low_stock_items || (Array.isArray(data.data) ? data.data : []);
+
+                    if (!items || items.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-success">Không có sản phẩm sắp hết</td></tr>';
+                        return;
+                    }
+
+                    tbody.innerHTML = items.map(item => `
+                        <tr>
+                            <td>Sản phẩm ${item.product_id}</td>
+                            <td><span class="badge bg-danger">${item.quantity_available || item.quantity || 0}</span></td>
+                            <td>${item.reorder_level || item.min_quantity || 10}</td>
+                            <td>
+                                <span class="badge bg-warning">
+                                    ${(item.reorder_level || item.min_quantity || 10) - (item.quantity_available || item.quantity || 0)} thiếu
+                                </span>
+                            </td>
+                            <td>
+                                <a href="/purchase-orders" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-cart-plus"></i> Đặt Hàng
+                                </a>
+                            </td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Không thể tải dữ liệu</td></tr>';
+                }
+            })
+            .catch(err => {
+                console.error('Error loading low stock:', err);
+                document.getElementById('lowStockTableBody').innerHTML =
+                    '<tr><td colspan="5" class="text-center text-success">Không có sản phẩm sắp hết</td></tr>';
+            });
+    }
+
+    function loadExpiryWarnings() {
+        const days = document.getElementById('expiryDaysFilter')?.value || 30;
+        fetch(`${API_URL}/inventory/expiry-warnings?days=${days}`)
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById('expiryTableBody');
+                if (data.success) {
+                    const items = data.data?.warnings || (Array.isArray(data.data) ? data.data : []);
+
+                    if (!items || items.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-success">Không có cảnh báo</td></tr>';
+                        return;
+                    }
+
+                    tbody.innerHTML = items.map(item => {
+                        const daysLeft = Math.ceil((new Date(item.expiry_date) - new Date()) / (1000 * 60 * 60 * 24));
+                        let status = 'success';
+                        if (daysLeft < 0) {
+                            status = 'danger';
+                        } else if (daysLeft < 7) {
+                            status = 'warning';
+                        }
+
+                        return `
+                            <tr>
+                                <td>Sản phẩm ${item.product_id}</td>
+                                <td><code>${item.batch_number || 'N/A'}</code></td>
+                                <td>${new Date(item.expiry_date).toLocaleDateString('vi-VN')}</td>
+                                <td>${item.quantity}</td>
+                                <td>${daysLeft < 0 ? 'Hết hạn' : daysLeft + ' ngày'}</td>
+                                <td><span class="badge bg-${status}">${item.warning_level || 'Cảnh báo'}</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-success">Không có cảnh báo</td></tr>';
+                }
+            })
+            .catch(err => {
+                console.error('Error loading expiry warnings:', err);
+                document.getElementById('expiryTableBody').innerHTML =
+                    '<tr><td colspan="7" class="text-center text-success">Không có cảnh báo</td></tr>';
+            });
+    }
+
+    function loadMovements() {
+        // Lấy tất cả movements thay vì chỉ của product_id = 1
+        fetch(`${API_URL}/inventory/movements?page=1&per_page=20`)
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById('movementsTableBody');
+                if (data.success) {
+                    const items = Array.isArray(data.data) ? data.data : [];
+
+                    if (!items || items.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Không có lịch sử</td></tr>';
+                        return;
+                    }
+
+                    tbody.innerHTML = items.map(item => {
+                        let typeIcon = '';
+                        let typeBadge = '';
+                        const moveType = (item.movement_type || '').toLowerCase();
+
+                        if (moveType === 'in') {
+                            typeIcon = 'bi-arrow-down-right';
+                            typeBadge = 'success';
+                        } else if (moveType === 'out') {
+                            typeIcon = 'bi-arrow-up-left';
+                            typeBadge = 'danger';
+                        } else {
+                            typeIcon = 'bi-arrow-left-right';
+                            typeBadge = 'warning';
+                        }
+
+                        return `
+                            <tr>
+                                <td>Sản phẩm ${item.product_id}</td>
+                                <td><span class="badge bg-${typeBadge}">
+                                    <i class="bi ${typeIcon}"></i> ${item.movement_type || 'N/A'}
+                                </span></td>
+                                <td><strong>${item.quantity}</strong></td>
+                                <td>${item.reference || 'N/A'}</td>
+                                <td>${item.note || 'N/A'}</td>
+                                <td>${item.created_at ? new Date(item.created_at).toLocaleString('vi-VN') : 'N/A'}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Không có lịch sử</td></tr>';
+                }
+            })
+            .catch(err => {
+                console.error('Error loading movements:', err);
+                document.getElementById('movementsTableBody').innerHTML =
+                    '<tr><td colspan="6" class="text-center text-muted">Không có lịch sử</td></tr>';
+            });
+    }
+    // ============ INVENTORY ADJUSTMENT FUNCTIONS ============
+    let inventoryData = []; // Cache inventory data for dropdown
+
+    // Load inventory data và populate dropdown
+    function loadInventoryForAdjust() {
+        fetch(`${API_URL}/inventory/all`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    inventoryData = Array.isArray(data.data) ? data.data : [];
+                    populateProductDropdown();
+                }
+            });
+    }
+
+    function populateProductDropdown() {
+        const select = document.getElementById('adjustProductId');
+        select.innerHTML = '<option value="">-- Chọn Sản Phẩm --</option>' +
+            inventoryData.map(item =>
+                `<option value="${item.product_id}" data-qty="${item.quantity}" data-loc="${item.location || 'N/A'}">
+                    Sản phẩm #${item.product_id} - Tồn: ${item.quantity}
+                </option>`
+            ).join('');
+    }
+
+    // Hiển thị thông tin khi chọn sản phẩm
+    function onProductSelected() {
+        const select = document.getElementById('adjustProductId');
+        const option = select.options[select.selectedIndex];
+        const infoDiv = document.getElementById('currentStockInfo');
+
+        if (select.value) {
+            const qty = option.getAttribute('data-qty') || 0;
+            const loc = option.getAttribute('data-loc') || 'N/A';
+
+            document.getElementById('currentStock').textContent = qty;
+            document.getElementById('currentLocation').textContent = loc;
+            infoDiv.style.display = 'block';
+
+            updatePreview();
+        } else {
+            infoDiv.style.display = 'none';
+            document.getElementById('adjustPreview').style.display = 'none';
+        }
+    }
+
+    // Thay đổi số lượng
+    function changeAdjustQty(value) {
+        const input = document.getElementById('adjustQuantity');
+        let newVal = parseInt(input.value || 0) + value;
+        if (newVal < 1) newVal = 1;
+        input.value = newVal;
+        updatePreview();
+    }
+
+    // Cập nhật preview
+    function updatePreview() {
+        const productId = document.getElementById('adjustProductId').value;
+        if (!productId) return;
+
+        const select = document.getElementById('adjustProductId');
+        const option = select.options[select.selectedIndex];
+        const currentQty = parseInt(option.getAttribute('data-qty') || 0);
+        const adjustQty = parseInt(document.getElementById('adjustQuantity').value || 0);
+        const adjustType = document.querySelector('input[name="adjustType"]:checked')?.value || 'adjust';
+
+        let newQty = currentQty;
+        let actionText = '';
+
+        switch (adjustType) {
+            case 'in':
+                newQty = currentQty + adjustQty;
+                actionText = `Nhập ${adjustQty} → Tồn kho: ${currentQty} → ${newQty}`;
+                break;
+            case 'out':
+                newQty = currentQty - adjustQty;
+                if (newQty < 0) newQty = 0;
+                actionText = `Xuất ${adjustQty} → Tồn kho: ${currentQty} → ${newQty}`;
+                break;
+            case 'adjust':
+                newQty = adjustQty;
+                actionText = `Đặt tồn kho từ ${currentQty} thành ${newQty}`;
+                break;
+        }
+
+        document.getElementById('previewText').textContent = actionText;
+        document.getElementById('adjustPreview').style.display = 'block';
+
+        // Update hint text
+        const hintEl = document.getElementById('adjustHint');
+        switch (adjustType) {
+            case 'in':
+                hintEl.textContent = 'Số lượng sẽ được cộng thêm vào tồn kho';
+                break;
+            case 'out':
+                hintEl.textContent = 'Số lượng sẽ được trừ khỏi tồn kho';
+                break;
+            case 'adjust':
+                hintEl.textContent = 'Tồn kho sẽ được đặt về giá trị này';
+                break;
+        }
+    }
+
+    // Submit điều chỉnh
+    function submitAdjust() {
+        const productId = document.getElementById('adjustProductId').value;
+        const quantity = parseInt(document.getElementById('adjustQuantity').value);
+        const adjustType = document.querySelector('input[name="adjustType"]:checked')?.value || 'adjust';
+        const reference = document.getElementById('adjustReference').value;
+        const reason = document.getElementById('adjustReason').value;
+
+        if (!productId) {
+            alert('Vui lòng chọn sản phẩm');
+            return;
+        }
+        if (!reason) {
+            alert('Vui lòng nhập lý do điều chỉnh');
+            return;
+        }
+        if (quantity <= 0) {
+            alert('Số lượng phải lớn hơn 0');
+            return;
+        }
+
+        fetch(`${API_URL}/inventory/adjust`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                product_id: parseInt(productId),
+                quantity: quantity,
+                type: adjustType,
+                reference: reference,
+                note: reason
+            })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Điều chỉnh tồn kho thành công!');
+                    bootstrap.Modal.getInstance(document.getElementById('adjustModal')).hide();
+                    document.getElementById('adjustForm').reset();
+                    document.getElementById('currentStockInfo').style.display = 'none';
+                    document.getElementById('adjustPreview').style.display = 'none';
+                    document.getElementById('typeAdjust').checked = true;
+                    loadInventory();
+                    loadMovements();
+                    loadLowStock();
+                } else {
+                    alert('Lỗi: ' + (data.message || 'Không thể điều chỉnh'));
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Có lỗi xảy ra, vui lòng thử lại');
+            });
+    }
+
+    // Event listeners for adjustment type change
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('input[name="adjustType"]').forEach(radio => {
+            radio.addEventListener('change', updatePreview);
+        });
+        document.getElementById('adjustQuantity')?.addEventListener('input', updatePreview);
+    });
+
+    // Load products khi mở modal
+    document.getElementById('adjustModal')?.addEventListener('show.bs.modal', function () {
+        loadInventoryForAdjust();
+        document.getElementById('adjustForm').reset();
+        document.getElementById('currentStockInfo').style.display = 'none';
+        document.getElementById('adjustPreview').style.display = 'none';
+        document.getElementById('typeAdjust').checked = true;
+        document.getElementById('adjustQuantity').value = 1;
+    });
+</script>
+{% endblock %}

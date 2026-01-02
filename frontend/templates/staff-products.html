@@ -1,0 +1,244 @@
+{% extends "staff-base.html" %}
+
+{% block title %}Sản Phẩm - Nhân Viên{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="bi bi-box"></i> Danh Sách Sản Phẩm</h1>
+        <p>Tra cứu thông tin sản phẩm <span class="badge bg-secondary">Chỉ xem</span></p>
+    </div>
+</div>
+
+<!-- Search & Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="searchInput"
+                        placeholder="Tìm theo tên, SKU, barcode...">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="categoryFilter">
+                    <option value="">Tất cả danh mục</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary w-100" onclick="loadProducts()">
+                    <i class="bi bi-search"></i> Tìm kiếm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Product List -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-list-ul"></i> Danh Sách Sản Phẩm
+        <span class="badge bg-light text-dark float-end" id="totalCount">0 sản phẩm</span>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover" id="productsTable">
+                <thead>
+                    <tr>
+                        <th>SKU</th>
+                        <th>Tên sản phẩm</th>
+                        <th>Danh mục</th>
+                        <th>Giá bán</th>
+                        <th>Đơn vị</th>
+                        <th>Barcode</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">
+                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                            Đang tải...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Product Detail Modal (View Only) -->
+<div class="modal fade" id="productDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-box-seam"></i> Chi Tiết Sản Phẩm</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>SKU:</strong> <span id="detailSku">--</span></p>
+                        <p><strong>Tên sản phẩm:</strong> <span id="detailName">--</span></p>
+                        <p><strong>Danh mục:</strong> <span id="detailCategory">--</span></p>
+                        <p><strong>Barcode:</strong> <span id="detailBarcode">--</span></p>
+                        <p><strong>Đơn vị:</strong> <span id="detailUnit">--</span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Giá bán:</strong> <span id="detailPrice" class="text-success fw-bold">--</span></p>
+                        <p><strong>Giá nhập:</strong> <span id="detailCostPrice">--</span></p>
+                        <p><strong>Nhà cung cấp:</strong> <span id="detailSupplier">--</span></p>
+                        <p><strong>Mô tả:</strong></p>
+                        <p id="detailDescription" class="text-muted">--</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let allProducts = [];
+    let categories = new Set();
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadProducts();
+
+        // Search on enter
+        document.getElementById('searchInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') filterAndDisplay();
+        });
+    });
+
+    async function loadProducts() {
+        const tbody = document.querySelector('#productsTable tbody');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-muted">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    Đang tải...
+                </td>
+            </tr>
+        `;
+
+        try {
+            const response = await fetch('/api/products');
+            const data = await response.json();
+
+            if (data.success && data.data) {
+                allProducts = data.data;
+
+                // Extract categories
+                categories = new Set(allProducts.map(p => p.category).filter(c => c));
+                populateCategoryFilter();
+
+                filterAndDisplay();
+            } else {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">
+                            <i class="bi bi-inbox"></i> Không có dữ liệu
+                        </td>
+                    </tr>
+                `;
+            }
+        } catch (error) {
+            console.error('Error loading products:', error);
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-danger">
+                        <i class="bi bi-exclamation-triangle"></i> Lỗi tải dữ liệu
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    function populateCategoryFilter() {
+        const select = document.getElementById('categoryFilter');
+        select.innerHTML = '<option value="">Tất cả danh mục</option>';
+        categories.forEach(cat => {
+            select.innerHTML += `<option value="${cat}">${cat}</option>`;
+        });
+    }
+
+    function filterAndDisplay() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const categoryFilter = document.getElementById('categoryFilter').value;
+
+        let filtered = allProducts.filter(p => {
+            const matchSearch = !searchTerm ||
+                (p.name && p.name.toLowerCase().includes(searchTerm)) ||
+                (p.sku && p.sku.toLowerCase().includes(searchTerm)) ||
+                (p.barcode && p.barcode.includes(searchTerm));
+
+            const matchCategory = !categoryFilter || p.category === categoryFilter;
+
+            return matchSearch && matchCategory;
+        });
+
+        displayProducts(filtered);
+    }
+
+    function displayProducts(products) {
+        const tbody = document.querySelector('#productsTable tbody');
+        document.getElementById('totalCount').textContent = `${products.length} sản phẩm`;
+
+        if (products.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-muted">
+                        <i class="bi bi-inbox"></i> Không tìm thấy sản phẩm
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = products.map(p => `
+            <tr style="cursor: pointer;" onclick="viewProduct(${p.id})">
+                <td><strong>${p.sku || '--'}</strong></td>
+                <td>${p.name || '--'}</td>
+                <td>${p.category || '--'}</td>
+                <td class="text-success fw-bold">${formatCurrency(p.selling_price || p.price || 0)}</td>
+                <td>${p.unit || '--'}</td>
+                <td><code>${p.barcode || '--'}</code></td>
+            </tr>
+        `).join('');
+    }
+
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND'
+        }).format(amount);
+    }
+
+    function viewProduct(id) {
+        const product = allProducts.find(p => p.id === id);
+        if (!product) return;
+
+        document.getElementById('detailSku').textContent = product.sku || '--';
+        document.getElementById('detailName').textContent = product.name || '--';
+        document.getElementById('detailCategory').textContent = product.category || '--';
+        document.getElementById('detailBarcode').innerHTML = product.barcode ?
+            `<code>${product.barcode}</code>` : '--';
+        document.getElementById('detailUnit').textContent = product.unit || '--';
+        document.getElementById('detailPrice').textContent = formatCurrency(product.selling_price || product.price || 0);
+        document.getElementById('detailCostPrice').textContent = formatCurrency(product.cost_price || 0);
+        document.getElementById('detailSupplier').textContent = product.supplier_id ?
+            'NCC' + String(product.supplier_id).padStart(3, '0') : '--';
+        document.getElementById('detailDescription').textContent = product.description || 'Không có mô tả';
+
+        new bootstrap.Modal(document.getElementById('productDetailModal')).show();
+    }
+
+    // Listen for filter changes
+    document.getElementById('categoryFilter').addEventListener('change', filterAndDisplay);
+</script>
+{% endblock %}

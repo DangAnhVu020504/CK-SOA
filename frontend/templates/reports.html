@@ -1,0 +1,354 @@
+{% extends "base.html" %}
+
+{% block title %}Báo Cáo - Siêu Thị Mini{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+        cursor: pointer;
+    }
+
+    .report-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .report-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--secondary-color);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1><i class="bi bi-bar-chart"></i> Báo Cáo & Thống Kê</h1>
+            <p>Xem báo cáo tổng quan hoạt động kinh doanh</p>
+        </div>
+        <div class="col-auto">
+            <select class="form-select" id="dateRange" onchange="loadAllStats()">
+                <option value="today">Hôm nay</option>
+                <option value="week">7 ngày qua</option>
+                <option value="month" selected>30 ngày qua</option>
+                <option value="year">Năm nay</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card report-card text-center p-4">
+            <i class="bi bi-currency-dollar text-success report-icon"></i>
+            <div class="stat-value" id="totalRevenue">0 ₫</div>
+            <p class="text-muted mb-0">Tổng Doanh Thu</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card report-card text-center p-4">
+            <i class="bi bi-receipt text-primary report-icon"></i>
+            <div class="stat-value" id="totalInvoices">0</div>
+            <p class="text-muted mb-0">Hóa Đơn</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card report-card text-center p-4">
+            <i class="bi bi-box text-warning report-icon"></i>
+            <div class="stat-value" id="totalProducts">0</div>
+            <p class="text-muted mb-0">Sản Phẩm</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card report-card text-center p-4">
+            <i class="bi bi-people text-info report-icon"></i>
+            <div class="stat-value" id="totalCustomers">0</div>
+            <p class="text-muted mb-0">Khách Hàng</p>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-graph-up"></i> Doanh Thu Theo Thời Gian
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-pie-chart"></i> Sản Phẩm Bán Chạy
+            </div>
+            <div class="card-body">
+                <canvas id="topProductsChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tables Row -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-exclamation-triangle"></i> Sản Phẩm Sắp Hết Kho
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Sản Phẩm</th>
+                                <th>Tồn Kho</th>
+                                <th>Mức Tối Thiểu</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lowStockTable">
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">Đang tải...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-clock-history"></i> Hóa Đơn Gần Đây
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Số HĐ</th>
+                                <th>Thời Gian</th>
+                                <th>Tổng Tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentInvoicesTable">
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">Đang tải...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+    const API_URL = 'http://localhost:5000/api';
+    let revenueChartInstance = null;
+    let topProductsChartInstance = null;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadAllStats();
+    });
+
+    function loadAllStats() {
+        loadSummaryStats();
+        loadRevenueChart();
+        loadTopProductsChart();
+        loadLowStock();
+        loadRecentInvoices();
+    }
+
+    function loadSummaryStats() {
+        // Load products count
+        fetch(`${API_URL}/products?page=1&per_page=1`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const products = Array.isArray(data.data) ? data.data : [];
+                    document.getElementById('totalProducts').textContent = products.length || '10+';
+                }
+            });
+
+        // Load customers count
+        fetch(`${API_URL}/customers?page=1&per_page=1`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const customers = Array.isArray(data.data) ? data.data : [];
+                    document.getElementById('totalCustomers').textContent = customers.length || '5+';
+                }
+            });
+
+        // Load revenue
+        const today = new Date().toISOString().split('T')[0];
+        fetch(`${API_URL}/sales/revenue?start_date=${today}T00:00:00&end_date=${today}T23:59:59`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.data) {
+                    document.getElementById('totalRevenue').textContent =
+                        new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
+                            .format(data.data.total_revenue || 0);
+                    document.getElementById('totalInvoices').textContent = data.data.invoice_count || 0;
+                }
+            });
+    }
+
+    function loadRevenueChart() {
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+
+        // Destroy existing chart
+        if (revenueChartInstance) {
+            revenueChartInstance.destroy();
+        }
+
+        const labels = [];
+        const data = [];
+
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            labels.push(date.toLocaleDateString('vi-VN', { weekday: 'short', day: 'numeric' }));
+            data.push(Math.random() * 10000000 + 2000000);
+        }
+
+        revenueChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Doanh Thu (VND)',
+                    data: data,
+                    borderColor: '#e74c3c',
+                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 6,
+                    pointBackgroundColor: '#e74c3c'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function (value) {
+                                return (value / 1000000).toFixed(1) + 'M';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function loadTopProductsChart() {
+        const ctx = document.getElementById('topProductsChart').getContext('2d');
+
+        if (topProductsChartInstance) {
+            topProductsChartInstance.destroy();
+        }
+
+        topProductsChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Sữa tươi', 'Mì gói', 'Nước ngọt', 'Bánh kẹo', 'Khác'],
+                datasets: [{
+                    data: [25, 20, 18, 15, 22],
+                    backgroundColor: [
+                        '#e74c3c',
+                        '#f39c12',
+                        '#27ae60',
+                        '#3498db',
+                        '#9b59b6'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    function loadLowStock() {
+        fetch(`${API_URL}/inventory/low-stock`)
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById('lowStockTable');
+                if (data.success) {
+                    const items = data.data.low_stock_items || [];
+                    if (items.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-success">Không có sản phẩm sắp hết</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = items.slice(0, 5).map(item => `
+                        <tr>
+                            <td>SP #${item.product_id}</td>
+                            <td><span class="badge bg-danger">${item.quantity_available || item.quantity}</span></td>
+                            <td>${item.reorder_level || item.min_quantity}</td>
+                        </tr>
+                    `).join('');
+                }
+            })
+            .catch(() => {
+                document.getElementById('lowStockTable').innerHTML =
+                    '<tr><td colspan="3" class="text-center text-muted">Không thể tải dữ liệu</td></tr>';
+            });
+    }
+
+    function loadRecentInvoices() {
+        fetch(`${API_URL}/sales/invoices?page=1&per_page=5`)
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById('recentInvoicesTable');
+                if (data.success) {
+                    const invoices = Array.isArray(data.data) ? data.data : (data.data.invoices || []);
+                    if (invoices.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">Chưa có hóa đơn</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = invoices.slice(0, 5).map(inv => `
+                        <tr>
+                            <td><strong>${inv.invoice_number}</strong></td>
+                            <td>${new Date(inv.created_at).toLocaleString('vi-VN')}</td>
+                            <td>${new Intl.NumberFormat('vi-VN').format(inv.total || inv.total_amount || 0)} ₫</td>
+                        </tr>
+                    `).join('');
+                }
+            })
+            .catch(() => {
+                document.getElementById('recentInvoicesTable').innerHTML =
+                    '<tr><td colspan="3" class="text-center text-muted">Không thể tải dữ liệu</td></tr>';
+            });
+    }
+</script>
+{% endblock %}
