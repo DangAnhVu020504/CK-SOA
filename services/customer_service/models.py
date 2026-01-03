@@ -49,5 +49,7 @@ class Customer(db.Model):
             'points': self.points,
             'total_spent': self.total_spent,
             'rank': self.rank.name if self.rank else 'Member',
+            'rank_name': self.rank.name if self.rank else 'Member',
+            'discount_percent': self.rank.discount_percent if self.rank else 0,
             'is_active': self.is_active
         }

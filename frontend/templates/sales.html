@@ -238,7 +238,9 @@
                         </button>
                     </div>
                     <div class="mt-2">
-                        <span class="badge bg-info me-2">Điểm hiện có: <span id="customerPoints">0</span></span>
+                        <span class="badge bg-primary me-2" id="customerRankBadge">Member</span>
+                        <span class="badge bg-info me-2">Điểm: <span id="customerPoints">0</span></span>
+                        <span class="badge bg-warning me-2">Giảm: <span id="customerDiscountPercent">0</span>%</span>
                         <span class="badge bg-success">+ <span id="pointsToAdd">0</span> điểm</span>
                     </div>
                 </div>
@@ -280,6 +282,7 @@
                 <select id="discountPercent" class="form-select form-select-sm" onchange="updateTotal()"
                     style="width: 80px;">
                     <option value="0">0%</option>
+                    <option value="3">3%</option>
                     <option value="5">5%</option>
                     <option value="10">10%</option>
                     <option value="15">15%</option>
@@ -409,6 +412,29 @@
         document.getElementById('customerCode').textContent = customer.code;
         document.getElementById('customerPoints').textContent = customer.points || 0;
 
+        // Display rank and discount
+        const rankName = customer.rank_name || customer.rank || 'Member';
+        const discountPercent = customer.discount_percent || 0;
+        document.getElementById('customerRankBadge').textContent = rankName;
+        document.getElementById('customerDiscountPercent').textContent = discountPercent;
+
+        // Auto-apply discount based on customer rank
+        const discountSelect = document.getElementById('discountPercent');
+        // Find matching option or closest lower value
+        let appliedDiscount = 0;
+        for (let option of discountSelect.options) {
+            if (parseFloat(option.value) <= discountPercent) {
+                appliedDiscount = parseFloat(option.value);
+            }
+        }
+        // If exact match exists, use it; otherwise use the floor value
+        if ([...discountSelect.options].some(o => parseFloat(o.value) === discountPercent)) {
+            discountSelect.value = discountPercent;
+        } else {
+            discountSelect.value = appliedDiscount;
+        }
+
+        updateTotal();
         updatePointsToAdd();
     }
 
@@ -461,6 +487,9 @@
         document.getElementById('newCustomerForm').style.display = 'none';
         document.getElementById('customerPhone').value = '';
         document.getElementById('pointsToAdd').textContent = '0';
+        // Reset discount to 0 when clearing customer
+        document.getElementById('discountPercent').value = '0';
+        updateTotal();
     }
 
     function calculatePointsToAdd(amount) {

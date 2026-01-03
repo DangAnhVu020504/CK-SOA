@@ -147,6 +147,11 @@ def reports_page():
     return render_template('reports.html')
 
 
+@app.route('/invoices')
+def invoices_page():
+    return render_template('invoices.html')
+
+
 # ============ STAFF ROUTES ============
 
 @app.route('/staff-dashboard')
@@ -408,7 +413,7 @@ def sales_invoices():
     return proxy_request('sales_service', '/api/sales/invoices')
 
 
-@app.route('/api/sales/invoices/<int:id>', methods=['GET', 'DELETE'])
+@app.route('/api/sales/invoices/<int:id>', methods=['GET', 'PUT', 'DELETE'])
 def sales_invoice_detail(id):
     return proxy_request('sales_service', f'/api/sales/invoices/{id}')
 
@@ -431,6 +436,11 @@ def sales_by_number(number):
 @app.route('/api/sales/revenue', methods=['GET'])
 def sales_revenue():
     return proxy_request('sales_service', '/api/sales/revenue')
+
+
+@app.route('/api/sales/invoices/search', methods=['GET'])
+def sales_invoice_search():
+    return proxy_request('sales_service', '/api/sales/invoices/search')
 
 
 # ============ SUPPLIER SERVICE ROUTES ============

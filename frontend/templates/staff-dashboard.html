@@ -107,34 +107,40 @@
 
 {% block extra_js %}
 <script>
+    const API_URL = 'http://localhost:5000/api';
+
     document.addEventListener('DOMContentLoaded', function () {
         loadDashboardData();
     });
 
     async function loadDashboardData() {
         try {
-            // Load today's sales
-            const salesResponse = await fetch('/api/sales/invoices');
+            // Load revenue stats from API
+            const revenueResponse = await fetch(`${API_URL}/sales/revenue`);
+            const revenueData = await revenueResponse.json();
+
+            if (revenueData.success && revenueData.data) {
+                document.getElementById('todaySales').textContent = revenueData.data.invoice_count || 0;
+                document.getElementById('todayRevenue').textContent = formatCurrency(revenueData.data.today_revenue || 0);
+            }
+
+            // Load invoices for customer count and table
+            const salesResponse = await fetch(`${API_URL}/sales/invoices`);
             const salesData = await salesResponse.json();
 
             if (salesData.success && salesData.data) {
+                const invoices = Array.isArray(salesData.data) ? salesData.data : [];
                 const today = new Date().toISOString().split('T')[0];
-                const todayInvoices = salesData.data.filter(inv =>
+                const todayInvoices = invoices.filter(inv =>
                     inv.created_at && inv.created_at.startsWith(today)
                 );
 
-                document.getElementById('todaySales').textContent = todayInvoices.length;
-
-                const paidInvoices = todayInvoices.filter(inv => inv.status === 'paid');
-                const totalRevenue = paidInvoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0);
-                document.getElementById('todayRevenue').textContent = formatCurrency(totalRevenue);
-
                 // Count unique customers today
-                const uniqueCustomers = new Set(todayInvoices.map(inv => inv.customer_id).filter(id => id));
+                const uniqueCustomers = new Set(todayInvoices.map(inv => inv.customer_id || inv.customer_phone).filter(id => id));
                 document.getElementById('todayCustomers').textContent = uniqueCustomers.size;
 
                 // Display recent sales
-                displayRecentSales(salesData.data.slice(0, 5));
+                displayRecentSales(invoices.slice(0, 5));
             }
         } catch (error) {
             console.error('Error loading dashboard data:', error);
@@ -161,8 +167,8 @@
         tbody.innerHTML = invoices.map(inv => `
             <tr>
                 <td><strong>${inv.invoice_number || '--'}</strong></td>
-                <td>${inv.customer_name || 'Khách lẻ'}</td>
-                <td>${formatCurrency(inv.total_amount || 0)}</td>
+                <td>${inv.customer_phone || 'Khách lẻ'}</td>
+                <td>${formatCurrency(inv.total || 0)}</td>
                 <td>${getStatusBadge(inv.status)}</td>
                 <td>${formatDateTime(inv.created_at)}</td>
             </tr>
@@ -172,7 +178,8 @@
     function formatCurrency(amount) {
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
-            currency: 'VND'
+            currency: 'VND',
+            maximumFractionDigits: 0
         }).format(amount);
     }
 
@@ -189,10 +196,9 @@
 
     function getStatusBadge(status) {
         const badges = {
-            'draft': '<span class="badge bg-secondary">Nháp</span>',
             'pending': '<span class="badge bg-warning">Chờ TT</span>',
-            'paid': '<span class="badge bg-success">Đã TT</span>',
-            'cancelled': '<span class="badge bg-danger">Hủy</span>'
+            'completed': '<span class="badge bg-success">Hoàn thành</span>',
+            'cancelled': '<span class="badge bg-danger">Đã hủy</span>'
         };
         return badges[status] || `<span class="badge bg-secondary">${status}</span>`;
     }

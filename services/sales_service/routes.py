@@ -30,14 +30,46 @@ def get_invoices():
 @sales_bp.route('/api/sales/invoices', methods=['POST'])
 def create_invoice():
     data = request.get_json() or {}
+    
+    # Calculate subtotal from items
+    items = data.get('items', [])
+    subtotal = sum(item.get('line_total', item.get('quantity', 1) * item.get('unit_price', 0)) for item in items)
+    discount = data.get('discount', 0)
+    tax = data.get('tax', 0)
+    total = subtotal - discount + tax
+    
+    # Use provided invoice_number or generate new one
+    invoice_number = data.get('invoice_number') or generate_invoice_number()
+    
     invoice = Invoice(
-        invoice_number=generate_invoice_number(),
+        invoice_number=invoice_number,
         customer_id=data.get('customer_id'),
         customer_phone=data.get('customer_phone'),
         employee_id=data.get('employee_id'),
-        note=data.get('note')
+        subtotal=subtotal,
+        discount=discount,
+        tax=tax,
+        total=total,
+        payment_method=data.get('payment_method', 'cash'),
+        status='completed',  # POS checkout = completed
+        note=data.get('note'),
+        completed_at=datetime.utcnow()
     )
     db.session.add(invoice)
+    db.session.flush()  # Get invoice.id before adding items
+    
+    # Add invoice items
+    for item in items:
+        detail = InvoiceDetail(
+            invoice_id=invoice.id,
+            product_id=item.get('product_id'),
+            product_name=item.get('product_name', 'Unknown'),
+            quantity=item.get('quantity', 1),
+            unit_price=item.get('unit_price', 0),
+            total_price=item.get('line_total', item.get('quantity', 1) * item.get('unit_price', 0))
+        )
+        db.session.add(detail)
+    
     db.session.commit()
     return jsonify({
         'success': True,
@@ -98,18 +130,132 @@ def checkout(id):
 
 @sales_bp.route('/api/sales/revenue', methods=['GET'])
 def get_revenue():
+    from datetime import timedelta
     today = datetime.utcnow().date()
+    
+    # Today's revenue
     today_revenue = db.session.query(func.sum(Invoice.total)).filter(
         func.date(Invoice.completed_at) == today,
         Invoice.status == 'completed'
     ).scalar() or 0
+    
+    # Today's invoice count
+    today_invoice_count = Invoice.query.filter(
+        func.date(Invoice.completed_at) == today,
+        Invoice.status == 'completed'
+    ).count()
+    
+    # Monthly revenue (current month)
+    first_day_of_month = today.replace(day=1)
+    monthly_revenue = db.session.query(func.sum(Invoice.total)).filter(
+        func.date(Invoice.completed_at) >= first_day_of_month,
+        Invoice.status == 'completed'
+    ).scalar() or 0
+    
+    # Total completed invoices (all time)
     total_invoices = Invoice.query.filter_by(status='completed').count()
+    
+    # 7-day revenue data for chart
+    chart_data = []
+    for i in range(6, -1, -1):
+        date = today - timedelta(days=i)
+        day_revenue = db.session.query(func.sum(Invoice.total)).filter(
+            func.date(Invoice.completed_at) == date,
+            Invoice.status == 'completed'
+        ).scalar() or 0
+        chart_data.append({
+            'date': date.strftime('%Y-%m-%d'),
+            'revenue': float(day_revenue)
+        })
+    
     return jsonify({
         'success': True,
         'data': {
-            'today_revenue': today_revenue,
-            'total_invoices': total_invoices
+            'today_revenue': float(today_revenue),
+            'total_revenue': float(today_revenue),
+            'monthly_revenue': float(monthly_revenue),
+            'total_invoices': total_invoices,
+            'invoice_count': today_invoice_count,
+            'chart_data': chart_data
         }
+    }), 200
+
+
+@sales_bp.route('/api/sales/invoices/<int:id>', methods=['PUT'])
+def update_invoice(id):
+    """Update an invoice (for admin management)"""
+    invoice = Invoice.query.get_or_404(id)
+    data = request.get_json() or {}
+    
+    # Allow updating these fields
+    if 'discount' in data:
+        invoice.discount = data['discount']
+        invoice.total = invoice.subtotal - invoice.discount + invoice.tax
+    if 'payment_method' in data:
+        invoice.payment_method = data['payment_method']
+    if 'status' in data:
+        invoice.status = data['status']
+        if data['status'] == 'completed' and not invoice.completed_at:
+            invoice.completed_at = datetime.utcnow()
+    if 'note' in data:
+        invoice.note = data['note']
+    if 'customer_phone' in data:
+        invoice.customer_phone = data['customer_phone']
+    
+    db.session.commit()
+    return jsonify({
+        'success': True,
+        'message': 'Cập nhật hóa đơn thành công',
+        'data': invoice.to_dict()
+    }), 200
+
+
+@sales_bp.route('/api/sales/invoices/<int:id>', methods=['DELETE'])
+def delete_invoice(id):
+    """Delete an invoice (for admin management)"""
+    invoice = Invoice.query.get_or_404(id)
+    db.session.delete(invoice)
+    db.session.commit()
+    return jsonify({
+        'success': True,
+        'message': 'Xóa hóa đơn thành công'
+    }), 200
+
+
+@sales_bp.route('/api/sales/invoices/search', methods=['GET'])
+def search_invoices():
+    """Search and filter invoices"""
+    query = Invoice.query
+    
+    # Filter by invoice_number
+    invoice_number = request.args.get('invoice_number', '').strip()
+    if invoice_number:
+        query = query.filter(Invoice.invoice_number.ilike(f'%{invoice_number}%'))
+    
+    # Filter by date range
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    if from_date:
+        query = query.filter(Invoice.created_at >= from_date)
+    if to_date:
+        query = query.filter(Invoice.created_at <= to_date + ' 23:59:59')
+    
+    # Filter by status
+    status = request.args.get('status', '').strip()
+    if status:
+        query = query.filter(Invoice.status == status)
+    
+    # Filter by payment method
+    payment_method = request.args.get('payment_method', '').strip()
+    if payment_method:
+        query = query.filter(Invoice.payment_method == payment_method)
+    
+    # Order by created_at desc
+    invoices = query.order_by(Invoice.created_at.desc()).limit(100).all()
+    
+    return jsonify({
+        'success': True,
+        'data': [i.to_dict() for i in invoices]
     }), 200
 
 

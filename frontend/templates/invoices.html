@@ -1,0 +1,457 @@
+{% extends "base.html" %}
+
+{% block title %}Quản Lý Hóa Đơn - Siêu Thị Mini{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1><i class="bi bi-file-earmark-text"></i> Quản Lý Hóa Đơn</h1>
+            <p>Xem, chỉnh sửa và quản lý các hóa đơn bán hàng</p>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Mã Hóa Đơn</label>
+                <input type="text" class="form-control" id="searchInvoiceNumber" placeholder="VD: INV-2026...">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Từ Ngày</label>
+                <input type="date" class="form-control" id="fromDate">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Đến Ngày</label>
+                <input type="date" class="form-control" id="toDate">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Trạng Thái</label>
+                <select class="form-select" id="statusFilter">
+                    <option value="">-- Tất cả --</option>
+                    <option value="pending">Đang chờ</option>
+                    <option value="completed">Hoàn thành</option>
+                    <option value="cancelled">Đã hủy</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Thanh Toán</label>
+                <select class="form-select" id="paymentFilter">
+                    <option value="">-- Tất cả --</option>
+                    <option value="cash">Tiền mặt</option>
+                    <option value="card">Thẻ</option>
+                    <option value="transfer">Chuyển khoản</option>
+                    <option value="ewallet">Ví điện tử</option>
+                </select>
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button class="btn btn-primary w-100" onclick="searchInvoices()">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-12 text-end">
+                <button class="btn btn-secondary" onclick="resetFilters()">
+                    <i class="bi bi-arrow-clockwise"></i> Đặt Lại
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Invoices Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Mã Hóa Đơn</th>
+                        <th>SĐT Khách</th>
+                        <th>Tổng Tiền</th>
+                        <th>Giảm Giá</th>
+                        <th>Thanh Toán</th>
+                        <th>Trạng Thái</th>
+                        <th>Ngày Tạo</th>
+                        <th>Hành Động</th>
+                    </tr>
+                </thead>
+                <tbody id="invoicesTableBody">
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            <i class="bi bi-hourglass-split"></i> Đang tải dữ liệu...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chi Tiết Hóa Đơn</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detailContent">
+                <!-- Loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chỉnh Sửa Hóa Đơn</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <input type="hidden" id="editInvoiceId">
+
+                    <div class="mb-3">
+                        <label class="form-label">Mã Hóa Đơn</label>
+                        <input type="text" class="form-control" id="editInvoiceNumber" readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">SĐT Khách Hàng</label>
+                        <input type="text" class="form-control" id="editCustomerPhone">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Giảm Giá (VND)</label>
+                        <input type="number" class="form-control" id="editDiscount" step="1000">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Phương Thức Thanh Toán</label>
+                        <select class="form-select" id="editPaymentMethod">
+                            <option value="cash">Tiền mặt</option>
+                            <option value="card">Thẻ</option>
+                            <option value="transfer">Chuyển khoản</option>
+                            <option value="ewallet">Ví điện tử</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Trạng Thái</label>
+                        <select class="form-select" id="editStatus">
+                            <option value="pending">Đang chờ</option>
+                            <option value="completed">Hoàn thành</option>
+                            <option value="cancelled">Đã hủy</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Ghi Chú</label>
+                        <textarea class="form-control" id="editNote" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="saveInvoice()">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const API_URL = 'http://localhost:5000/api';
+    let allInvoices = [];
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadInvoices();
+    });
+
+    function loadInvoices() {
+        fetch(`${API_URL}/sales/invoices`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    allInvoices = data.data || [];
+                    renderInvoicesTable(allInvoices);
+                }
+            })
+            .catch(err => console.error('Error:', err));
+    }
+
+    function searchInvoices() {
+        const params = new URLSearchParams();
+
+        const invoiceNumber = document.getElementById('searchInvoiceNumber').value.trim();
+        const fromDate = document.getElementById('fromDate').value;
+        const toDate = document.getElementById('toDate').value;
+        const status = document.getElementById('statusFilter').value;
+        const paymentMethod = document.getElementById('paymentFilter').value;
+
+        if (invoiceNumber) params.append('invoice_number', invoiceNumber);
+        if (fromDate) params.append('from_date', fromDate);
+        if (toDate) params.append('to_date', toDate);
+        if (status) params.append('status', status);
+        if (paymentMethod) params.append('payment_method', paymentMethod);
+
+        fetch(`${API_URL}/sales/invoices/search?${params}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    renderInvoicesTable(data.data || []);
+                }
+            })
+            .catch(err => console.error('Error:', err));
+    }
+
+    function resetFilters() {
+        document.getElementById('searchInvoiceNumber').value = '';
+        document.getElementById('fromDate').value = '';
+        document.getElementById('toDate').value = '';
+        document.getElementById('statusFilter').value = '';
+        document.getElementById('paymentFilter').value = '';
+        loadInvoices();
+    }
+
+    function renderInvoicesTable(invoices) {
+        const tbody = document.getElementById('invoicesTableBody');
+
+        if (!invoices || invoices.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Không có hóa đơn</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = invoices.map(inv => `
+            <tr>
+                <td><strong>${inv.invoice_number}</strong></td>
+                <td>${inv.customer_phone || 'N/A'}</td>
+                <td>${formatCurrency(inv.total)}</td>
+                <td>${formatCurrency(inv.discount || 0)}</td>
+                <td><span class="badge ${getPaymentBadge(inv.payment_method)}">${getPaymentLabel(inv.payment_method)}</span></td>
+                <td><span class="badge ${getStatusBadge(inv.status)}">${getStatusLabel(inv.status)}</span></td>
+                <td>${formatDate(inv.created_at)}</td>
+                <td>
+                    <button class="btn btn-sm btn-info" onclick="viewInvoice(${inv.id})">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-warning" onclick="editInvoice(${inv.id})">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteInvoice(${inv.id})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return 'N/A';
+        return new Date(dateStr).toLocaleString('vi-VN');
+    }
+
+    function getPaymentLabel(method) {
+        const labels = {
+            'cash': 'Tiền mặt',
+            'card': 'Thẻ',
+            'transfer': 'Chuyển khoản',
+            'ewallet': 'Ví điện tử'
+        };
+        return labels[method] || method;
+    }
+
+    function getPaymentBadge(method) {
+        const badges = {
+            'cash': 'bg-success',
+            'card': 'bg-info',
+            'transfer': 'bg-primary',
+            'ewallet': 'bg-warning'
+        };
+        return badges[method] || 'bg-secondary';
+    }
+
+    function getStatusLabel(status) {
+        const labels = {
+            'pending': 'Đang chờ',
+            'completed': 'Hoàn thành',
+            'cancelled': 'Đã hủy'
+        };
+        return labels[status] || status;
+    }
+
+    function getStatusBadge(status) {
+        const badges = {
+            'pending': 'bg-warning',
+            'completed': 'bg-success',
+            'cancelled': 'bg-danger'
+        };
+        return badges[status] || 'bg-secondary';
+    }
+
+    function viewInvoice(id) {
+        fetch(`${API_URL}/sales/invoices/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const inv = data.data;
+                    let itemsHtml = '';
+                    if (inv.items && inv.items.length > 0) {
+                        itemsHtml = `
+                            <h6>Sản phẩm:</h6>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Tên SP</th>
+                                        <th>SL</th>
+                                        <th>Đơn Giá</th>
+                                        <th>Thành Tiền</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${inv.items.map(item => `
+                                        <tr>
+                                            <td>${item.product_name}</td>
+                                            <td>${item.quantity}</td>
+                                            <td>${formatCurrency(item.unit_price)}</td>
+                                            <td>${formatCurrency(item.total_price)}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        `;
+                    }
+
+                    document.getElementById('detailContent').innerHTML = `
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong>Mã Hóa Đơn:</strong> ${inv.invoice_number}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Ngày Tạo:</strong> ${formatDate(inv.created_at)}
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong>SĐT Khách:</strong> ${inv.customer_phone || 'N/A'}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Trạng Thái:</strong> 
+                                <span class="badge ${getStatusBadge(inv.status)}">${getStatusLabel(inv.status)}</span>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <strong>Tạm Tính:</strong> ${formatCurrency(inv.subtotal)}
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Giảm Giá:</strong> ${formatCurrency(inv.discount)}
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Tổng Cộng:</strong> <span class="text-success fw-bold">${formatCurrency(inv.total)}</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Thanh Toán:</strong> 
+                            <span class="badge ${getPaymentBadge(inv.payment_method)}">${getPaymentLabel(inv.payment_method)}</span>
+                        </div>
+                        <hr>
+                        ${itemsHtml}
+                    `;
+                    new bootstrap.Modal(document.getElementById('detailModal')).show();
+                }
+            });
+    }
+
+    function editInvoice(id) {
+        fetch(`${API_URL}/sales/invoices/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const inv = data.data;
+                    document.getElementById('editInvoiceId').value = inv.id;
+                    document.getElementById('editInvoiceNumber').value = inv.invoice_number;
+                    document.getElementById('editCustomerPhone').value = inv.customer_phone || '';
+                    document.getElementById('editDiscount').value = inv.discount || 0;
+                    document.getElementById('editPaymentMethod').value = inv.payment_method || 'cash';
+                    document.getElementById('editStatus').value = inv.status || 'pending';
+                    document.getElementById('editNote').value = inv.note || '';
+                    new bootstrap.Modal(document.getElementById('editModal')).show();
+                }
+            });
+    }
+
+    function saveInvoice() {
+        const id = document.getElementById('editInvoiceId').value;
+        const data = {
+            customer_phone: document.getElementById('editCustomerPhone').value,
+            discount: parseFloat(document.getElementById('editDiscount').value) || 0,
+            payment_method: document.getElementById('editPaymentMethod').value,
+            status: document.getElementById('editStatus').value,
+            note: document.getElementById('editNote').value
+        };
+
+        fetch(`${API_URL}/sales/invoices/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Cập nhật hóa đơn thành công!');
+                    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                    loadInvoices();
+                } else {
+                    alert('Lỗi: ' + data.message);
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Lỗi khi cập nhật hóa đơn');
+            });
+    }
+
+    function deleteInvoice(id) {
+        if (confirm('Bạn chắc chắn muốn xóa hóa đơn này?')) {
+            fetch(`${API_URL}/sales/invoices/${id}`, { method: 'DELETE' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Xóa hóa đơn thành công!');
+                        loadInvoices();
+                    } else {
+                        alert('Lỗi: ' + data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('Lỗi khi xóa hóa đơn');
+                });
+        }
+    }
+
+    // Enter key to search
+    document.getElementById('searchInvoiceNumber')?.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            searchInvoices();
+        }
+    });
+</script>
+{% endblock %}
