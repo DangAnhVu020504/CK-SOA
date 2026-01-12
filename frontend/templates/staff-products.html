@@ -49,6 +49,7 @@
                         <th>SKU</th>
                         <th>Tên sản phẩm</th>
                         <th>Danh mục</th>
+                        <th>Số lượng</th>
                         <th>Giá bán</th>
                         <th>Đơn vị</th>
                         <th>Barcode</th>
@@ -56,7 +57,7 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td colspan="6" class="text-center text-muted">
+                        <td colspan="7" class="text-center text-muted">
                             <div class="spinner-border spinner-border-sm me-2" role="status"></div>
                             Đang tải...
                         </td>
@@ -87,6 +88,7 @@
                     <div class="col-md-6">
                         <p><strong>Giá bán:</strong> <span id="detailPrice" class="text-success fw-bold">--</span></p>
                         <p><strong>Giá nhập:</strong> <span id="detailCostPrice">--</span></p>
+                        <p><strong>Số lượng tồn:</strong> <span id="detailQuantity">--</span></p>
                         <p><strong>Nhà cung cấp:</strong> <span id="detailSupplier">--</span></p>
                         <p><strong>Mô tả:</strong></p>
                         <p id="detailDescription" class="text-muted">--</p>
@@ -119,7 +121,7 @@
         const tbody = document.querySelector('#productsTable tbody');
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center text-muted">
+                <td colspan="7" class="text-center text-muted">
                     <div class="spinner-border spinner-border-sm me-2" role="status"></div>
                     Đang tải...
                 </td>
@@ -141,7 +143,7 @@
             } else {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="text-center text-muted">
+                        <td colspan="7" class="text-center text-muted">
                             <i class="bi bi-inbox"></i> Không có dữ liệu
                         </td>
                     </tr>
@@ -151,7 +153,7 @@
             console.error('Error loading products:', error);
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="text-center text-danger">
+                    <td colspan="7" class="text-center text-danger">
                         <i class="bi bi-exclamation-triangle"></i> Lỗi tải dữ liệu
                     </td>
                 </tr>
@@ -192,7 +194,7 @@
         if (products.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="text-center text-muted">
+                    <td colspan="7" class="text-center text-muted">
                         <i class="bi bi-inbox"></i> Không tìm thấy sản phẩm
                     </td>
                 </tr>
@@ -200,16 +202,33 @@
             return;
         }
 
-        tbody.innerHTML = products.map(p => `
-            <tr style="cursor: pointer;" onclick="viewProduct(${p.id})">
-                <td><strong>${p.sku || '--'}</strong></td>
-                <td>${p.name || '--'}</td>
-                <td>${p.category || '--'}</td>
-                <td class="text-success fw-bold">${formatCurrency(p.selling_price || p.price || 0)}</td>
-                <td>${p.unit || '--'}</td>
-                <td><code>${p.barcode || '--'}</code></td>
-            </tr>
-        `).join('');
+        tbody.innerHTML = products.map(p => {
+            // Xác định trạng thái tồn kho
+            let qtyBadge = '';
+            let rowClass = '';
+            const qty = p.quantity || 0;
+            
+            if (p.is_out_of_stock || qty <= 0) {
+                qtyBadge = '<span class="badge bg-danger">Hết hàng</span>';
+                rowClass = 'style="opacity: 0.6;"';
+            } else if (p.is_low_stock || qty <= 50) {
+                qtyBadge = `<span class="badge bg-warning text-dark">${qty}</span> <small class="text-warning">Sắp hết</small>`;
+            } else {
+                qtyBadge = `<span class="badge bg-success">${qty}</span>`;
+            }
+            
+            return `
+                <tr ${rowClass} style="cursor: pointer;" onclick="viewProduct(${p.id})">
+                    <td><strong>${p.sku || '--'}</strong></td>
+                    <td>${p.name || '--'}</td>
+                    <td><span class="badge bg-info">${p.category || '--'}</span></td>
+                    <td>${qtyBadge}</td>
+                    <td class="text-success fw-bold">${formatCurrency(p.selling_price || p.price || 0)}</td>
+                    <td>${p.unit || '--'}</td>
+                    <td><code>${p.barcode || '--'}</code></td>
+                </tr>
+            `;
+        }).join('');
     }
 
     function formatCurrency(amount) {
@@ -231,6 +250,19 @@
         document.getElementById('detailUnit').textContent = product.unit || '--';
         document.getElementById('detailPrice').textContent = formatCurrency(product.selling_price || product.price || 0);
         document.getElementById('detailCostPrice').textContent = formatCurrency(product.cost_price || 0);
+        
+        // Hiển thị số lượng tồn kho với badge
+        const qty = product.quantity || 0;
+        let qtyHtml = '';
+        if (qty <= 0) {
+            qtyHtml = '<span class="badge bg-danger">Hết hàng (0)</span>';
+        } else if (qty <= 50) {
+            qtyHtml = `<span class="badge bg-warning text-dark">${qty}</span> <small class="text-warning">Sắp hết</small>`;
+        } else {
+            qtyHtml = `<span class="badge bg-success">${qty}</span>`;
+        }
+        document.getElementById('detailQuantity').innerHTML = qtyHtml;
+        
         document.getElementById('detailSupplier').textContent = product.supplier_id ?
             'NCC' + String(product.supplier_id).padStart(3, '0') : '--';
         document.getElementById('detailDescription').textContent = product.description || 'Không có mô tả';

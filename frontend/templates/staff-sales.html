@@ -547,13 +547,31 @@
             return;
         }
 
-        grid.innerHTML = products.map(p => `
-            <div class="product-card" onclick="addToInvoice(${p.id}, '${p.name}', ${p.selling_price || p.price || 0})">
-                <h5>${p.name}</h5>
-                <div class="price">${new Intl.NumberFormat('vi-VN').format(p.selling_price || p.price || 0)} ₫</div>
-                <div class="qty">SKU: ${p.sku}</div>
-            </div>
-        `).join('');
+        grid.innerHTML = products.map(p => {
+            const qty = p.quantity || 0;
+            let qtyDisplay = '';
+            let cardClass = 'product-card';
+            let onclickAttr = `onclick="addToInvoice(${p.id}, '${p.name.replace(/'/g, "\\'")}', ${p.selling_price || p.price || 0})"`;
+            
+            if (qty <= 0) {
+                qtyDisplay = '<span class="badge bg-danger">Hết hàng</span>';
+                cardClass += ' opacity-50';
+                onclickAttr = 'onclick="alert(\'Sản phẩm đã hết hàng!\')"';
+            } else if (qty <= 50) {
+                qtyDisplay = `<span class="badge bg-warning text-dark">Còn ${qty}</span>`;
+            } else {
+                qtyDisplay = `<span class="badge bg-success">Còn ${qty}</span>`;
+            }
+            
+            return `
+                <div class="${cardClass}" ${onclickAttr}>
+                    <h5>${p.name}</h5>
+                    <div class="price">${new Intl.NumberFormat('vi-VN').format(p.selling_price || p.price || 0)} ₫</div>
+                    <div class="qty">SKU: ${p.sku}</div>
+                    <div class="mt-1">${qtyDisplay}</div>
+                </div>
+            `;
+        }).join('');
     }
 
     function handleBarcodeInput(e) {
