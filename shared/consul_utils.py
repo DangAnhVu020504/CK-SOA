@@ -22,7 +22,7 @@ class ConsulClient:
         self._registered_services = []
         self._available_cache = None
         self._cache_time = 0
-        self._cache_ttl = 30  # Cache for 30 seconds
+        self._cache_ttl = 30
     
     def is_available(self) -> bool:
         """Kiểm tra Consul có đang chạy không (với caching)"""

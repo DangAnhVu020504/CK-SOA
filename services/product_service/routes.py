@@ -54,6 +54,7 @@ def create_product():
         unit=data.get('unit', 'cái'),
         cost_price=data.get('cost_price') or data.get('cost', 0),
         selling_price=data.get('selling_price') or data.get('price', 0),
+        quantity=data.get('quantity', 0),
         supplier_id=data.get('supplier_id'),
         manufacturing_date=parse_date(data.get('manufacturing_date')),
         expiry_date=parse_date(data.get('expiry_date'))
@@ -94,6 +95,8 @@ def update_product(id):
         product.manufacturing_date = parse_date(data['manufacturing_date']) if data['manufacturing_date'] else None
     if 'expiry_date' in data:
         product.expiry_date = parse_date(data['expiry_date']) if data['expiry_date'] else None
+    if 'quantity' in data:
+        product.quantity = data['quantity']
     
     db.session.commit()
     
@@ -130,6 +133,65 @@ def get_by_sku(sku):
     if not product:
         return jsonify({'success': False, 'message': 'Không tìm thấy'}), 404
     return jsonify({'success': True, 'data': product.to_dict()}), 200
+
+
+@product_bp.route('/api/products/<int:id>/update-quantity', methods=['PUT'])
+def update_quantity(id):
+    """Cập nhật số lượng sản phẩm (dùng khi bán hàng hoặc nhập hàng)"""
+    product = Product.query.get_or_404(id)
+    data = request.get_json()
+    
+    quantity_change = data.get('quantity_change', 0)
+    operation = data.get('operation', 'set')  # 'add', 'subtract', 'set'
+    
+    if operation == 'add':
+        product.quantity += quantity_change
+    elif operation == 'subtract':
+        if product.quantity < quantity_change:
+            return jsonify({'success': False, 'message': 'Không đủ số lượng trong kho'}), 400
+        product.quantity -= quantity_change
+    else:  # set
+        product.quantity = data.get('quantity', product.quantity)
+    
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': 'Cập nhật số lượng thành công',
+        'data': product.to_dict()
+    }), 200
+
+
+@product_bp.route('/api/products/low-stock', methods=['GET'])
+def get_low_stock_products():
+    """Lấy danh sách sản phẩm sắp hết hàng (quantity <= 50)"""
+    threshold = request.args.get('threshold', Product.LOW_STOCK_THRESHOLD, type=int)
+    products = Product.query.filter(
+        Product.is_active == True,
+        Product.quantity <= threshold,
+        Product.quantity > 0
+    ).all()
+    
+    return jsonify({
+        'success': True,
+        'data': [p.to_dict() for p in products],
+        'count': len(products)
+    }), 200
+
+
+@product_bp.route('/api/products/out-of-stock', methods=['GET'])
+def get_out_of_stock_products():
+    """Lấy danh sách sản phẩm hết hàng (quantity = 0)"""
+    products = Product.query.filter(
+        Product.is_active == True,
+        Product.quantity <= 0
+    ).all()
+    
+    return jsonify({
+        'success': True,
+        'data': [p.to_dict() for p in products],
+        'count': len(products)
+    }), 200
 
 
 @product_bp.errorhandler(404)

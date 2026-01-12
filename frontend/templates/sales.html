@@ -549,13 +549,32 @@
             return;
         }
 
-        grid.innerHTML = products.map(p => `
-            <div class="product-card" onclick="addToInvoice(${p.id}, '${p.name}', ${p.selling_price || p.price || 0})">
+        grid.innerHTML = products.map(p => {
+            const isOutOfStock = p.is_out_of_stock || (p.quantity !== undefined && p.quantity <= 0);
+            const isLowStock = p.is_low_stock || (p.quantity !== undefined && p.quantity <= 50 && p.quantity > 0);
+
+            // Quantity display
+            let qtyDisplay = '';
+            if (isOutOfStock) {
+                qtyDisplay = '<span class="badge bg-danger">Hết hàng</span>';
+            } else if (isLowStock) {
+                qtyDisplay = `<span class="badge bg-warning text-dark">Còn ${p.quantity}</span>`;
+            } else if (p.quantity !== undefined) {
+                qtyDisplay = `<span class="badge bg-success">Còn ${p.quantity}</span>`;
+            }
+
+            // Styling for out-of-stock
+            const cardStyle = isOutOfStock ? 'opacity: 0.5; pointer-events: none;' : '';
+            const clickHandler = isOutOfStock ? '' : `onclick="addToInvoice(${p.id}, '${p.name.replace(/'/g, "\\'")}', ${p.selling_price || p.price || 0})"`;
+
+            return `
+            <div class="product-card" style="${cardStyle}" ${clickHandler}>
                 <h5>${p.name}</h5>
                 <div class="price">${new Intl.NumberFormat('vi-VN').format(p.selling_price || p.price || 0)} ₫</div>
                 <div class="qty">SKU: ${p.sku}</div>
+                ${qtyDisplay ? `<div class="mt-2">${qtyDisplay}</div>` : ''}
             </div>
-        `).join('');
+        `}).join('');
     }
 
     function handleBarcodeInput(e) {
@@ -742,6 +761,8 @@
         document.getElementById('paidAmount').value = 0;
         clearCustomer();
         updateInvoiceDisplay();
+        // Reload products to refresh quantities after sale
+        loadProducts();
     }
 
     function printReceipt() {

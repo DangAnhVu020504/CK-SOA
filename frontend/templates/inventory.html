@@ -349,13 +349,32 @@
 {% block extra_js %}
 <script>
     const API_URL = 'http://localhost:5000/api';
+    let productsMap = {}; // Map product_id -> product info
 
     document.addEventListener('DOMContentLoaded', function () {
-        loadInventory();
+        loadProductsForInventory().then(() => {
+            loadInventory();
+        });
         loadLowStock();
         loadExpiryWarnings();
         loadMovements();
     });
+
+    // Load products to get names for inventory display
+    function loadProductsForInventory() {
+        return fetch(`${API_URL}/products?per_page=500`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const products = Array.isArray(data.data) ? data.data : (data.data.products || []);
+                    productsMap = {};
+                    products.forEach(p => {
+                        productsMap[p.id] = p;
+                    });
+                }
+            })
+            .catch(err => console.error('Load products error:', err));
+    }
 
     function loadInventory() {
         fetch(`${API_URL}/inventory/all`)
@@ -379,12 +398,29 @@
         }
 
         tbody.innerHTML = items.map(item => {
-            const isLowStock = item.is_low_stock || item.quantity <= (item.min_quantity || 10);
+            const product = productsMap[item.product_id] || {};
+            const productName = product.name || `Sản phẩm #${item.product_id}`;
+            const productSku = product.sku || '';
+
+            const isOutOfStock = item.is_out_of_stock || item.quantity <= 0;
+            const isLowStock = item.is_low_stock || (item.quantity <= 50 && item.quantity > 0);
+            let rowClass = isOutOfStock ? 'style="opacity: 0.5;"' : '';
+
+            // Quantity display with status
+            let qtyDisplay = '';
+            if (isOutOfStock) {
+                qtyDisplay = '<span class="badge bg-danger">Hết hàng</span>';
+            } else if (isLowStock) {
+                qtyDisplay = `<strong class="text-warning">${item.quantity}</strong> <small class="text-warning">Sắp hết</small>`;
+            } else {
+                qtyDisplay = `<strong class="text-success">${item.quantity}</strong>`;
+            }
+
             return `
-                <tr>
-                    <td><strong>#${item.product_id}</strong></td>
-                    <td>Sản phẩm ${item.product_id}</td>
-                    <td><strong>${item.quantity || item.quantity_on_hand || 0}</strong></td>
+                <tr ${rowClass}>
+                    <td><strong>${productSku || '#' + item.product_id}</strong></td>
+                    <td>${productName}</td>
+                    <td>${qtyDisplay}</td>
                     <td>${item.quantity_reserved || 0}</td>
                     <td>${item.quantity || item.quantity_available || 0}</td>
                     <td>${item.min_quantity || item.reorder_level || 10}</td>
@@ -511,9 +547,12 @@
                         return;
                     }
 
-                    tbody.innerHTML = items.map(item => `
+                    tbody.innerHTML = items.map(item => {
+                        const product = productsMap[item.product_id] || {};
+                        const productName = product.name || `Sản phẩm #${item.product_id}`;
+                        return `
                         <tr>
-                            <td>Sản phẩm ${item.product_id}</td>
+                            <td>${productName}</td>
                             <td><span class="badge bg-danger">${item.quantity_available || item.quantity || 0}</span></td>
                             <td>${item.reorder_level || item.min_quantity || 10}</td>
                             <td>
@@ -527,7 +566,7 @@
                                 </a>
                             </td>
                         </tr>
-                    `).join('');
+                    `}).join('');
                 } else {
                     tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Không thể tải dữ liệu</td></tr>';
                 }

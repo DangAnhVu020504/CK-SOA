@@ -1,0 +1,375 @@
+0: TRƯỜNG ĐẠI HỌC QUY NHƠN
+1: KHOA CÔNG NGHỆ THÔNG TIN
+2: -----🙞🙜🕮🙞🙜-----
+6: Báo Cáo
+7: Môn : Kiến trúc hướng dịch vụ 
+8: Đề tài : Sử dụng kiến trúc SOA để Phân tích, Xây dựng và 
+9: Quản lý Siêu thị Mini    
+10: Giảng viên : Võ Thị Mỹ
+12: Nhóm sinh viên thực hiện: Nhóm 11
+14: Mã lớp học phần: 251105021501 
+16: Gia Lai , tháng 12 năm 2025
+17: BẢNG PHÂN CHIA CÔNG VIỆC
+33: Mục lục
+64: Giới Thiệu Chung về quản lý siêu thị mini
+65: 1.1. Phát biểu bài toán
+66: Trong bối cảnh hiện nay, các siêu thị mini và cửa hàng tiện lợi ngày càng phát triển cả về số lượng lẫn quy mô, kéo theo yêu cầu cao hơn trong công tác quản lý và vận hành. Việc quản lý theo phương pháp thủ công hoặc bán tự động không còn đáp ứng được nhu cầu thực tế, dẫn đến nhiều bất cập trong hoạt động kinh doanh hàng ngày.
+68: 1.2. Lý do chọn đề tài:
+69: Ngày nay, mô hình siêu thị mini và cửa hàng tiện lợi đang phát triển mạnh mẽ và trở nên phổ biến, thay thế dần các cửa hàng tạp hóa truyền thống. Sự gia tăng về số lượng và quy mô đòi hỏi một hệ thống quản lý hiệu quả, chính xác và tức thời để tối ưu hóa hoạt động. Các phương pháp quản lý thủ công (sổ sách, Excel) đang bộc lộ nhiều hạn chế như:
+70: Tốn thời gian: Trong việc kiểm kê, tính toán doanh thu, và lập báo cáo.
+71: Dễ sai sót: Dẫn đến thất thoát hàng hóa hoặc sai lệch sổ sách.
+72: Khó khăn trong quản lý tồn kho: Gây ra tình trạng thiếu hàng đột xuất hoặc tồn đọng hàng quá hạn.
+73: Đề tài "Xây dựng hệ thống Quản lý Siêu thị Mini" được chọn với mục tiêu cung cấp một giải pháp phần mềm toàn diện, giúp các nhà quản lý khắc phục những nhược điểm trên, từ đó nâng cao hiệu suất kinh doanh và khả năng cạnh tranh.
+75: 1.3. Mục tiêu của hệ thống
+76: Hệ thống được xây dựng nhằm đạt được các mục tiêu cốt lõi sau:
+77: Tự động hóa quy trình bán hàng: Hỗ trợ thực hiện giao dịch tại quầy (POS) một cách nhanh chóng, chính xác và giảm thiểu sai sót.
+78: Quản lý tồn kho hiệu quả: Theo dõi số lượng hàng hóa theo thời gian thực, đồng thời đưa ra cảnh báo khi hàng sắp hết hoặc sắp đến hạn sử dụng.
+79: Quản lý khách hàng thân thiết: Áp dụng cơ chế tích điểm và phân hạng thành viên nhằm nâng cao mức độ gắn kết và giữ chân khách hàng.
+80: Quản lý nhà cung cấp: Quản lý thông tin nhà cung cấp, theo dõi đơn đặt hàng và tình trạng thanh toán một cách chặt chẽ.
+81: Phân quyền người dùng: Đảm bảo an toàn và bảo mật hệ thống thông qua cơ chế xác thực và phân quyền truy cập rõ ràng cho từng vai trò.
+84: 1.4. Phạm vi đối tượng sử dụng:
+85: Hệ thống Quản lý Siêu thị Mini được thiết kế để phục vụ ba nhóm đối tượng người dùng chính, mỗi nhóm có phạm vi nghiệp vụ và quyền hạn riêng biệt nhằm đảm bảo quy trình vận hành trơn tru và bảo mật thông tin.
+86: Nhân viên Bán hàng (Cashier): Đây là nhóm người dùng trực tiếp sử dụng hệ thống tại quầy thanh toán. Nhiệm vụ chính của họ là thực hiện các giao dịch bán hàng nhanh chóng và chính xác, bao gồm việc quét mã vạch sản phẩm, tính tổng tiền, áp dụng các chương trình khuyến mãi, xử lý các hình thức thanh toán, và in hóa đơn cho khách hàng. Ngoài ra, nhân viên bán hàng còn có thể tra cứu nhanh thông tin sản phẩm và quản lý thông tin khách hàng thân thiết.
+87: Nhân viên Kho hàng (Storekeeper): Nhóm này chịu trách nhiệm quản lý hàng hóa vật lý. Họ sử dụng hệ thống để thực hiện các nghiệp vụ nhập/xuất kho, cập nhật số lượng và tình trạng hàng hóa. Phạm vi công việc bao gồm việc kiểm kê định kỳ, xác nhận đơn hàng từ nhà cung cấp, cập nhật thông tin chi tiết về sản phẩm mới, và theo dõi thời hạn sử dụng để tránh thất thoát.
+88: Quản lý Siêu thị (Manager/Administrator): Người quản lý nắm giữ quyền hạn cao nhất trong hệ thống. Phạm vi sử dụng của họ là toàn diện, bao gồm tất cả các chức năng từ việc thiết lập hệ thống, quản lý thông tin nhân sự và phân quyền, đến thiết lập giá bán và các chương trình khuyến mãi. Vai trò quan trọng nhất của họ là theo dõi và phân tích các báo cáo thống kê về doanh thu, lợi nhuận, hàng tồn kho và hiệu suất làm việc của nhân viên, từ đó đưa ra các quyết định kinh doanh và điều chỉnh chiến lược kịp thời.
+90: 1.5. Công nghệ sử dụng:
+91: Hệ thống Quản lý Siêu thị Mini sẽ được phát triển dựa trên bộ công nghệ hiện đại, tập trung vào tính linh hoạt và tốc độ phát triển của Flask framework.
+92: Nền tảng chính (Back-end):
+93: Flask (Python): Được chọn là framework chính cho phần back-end. Flask là một micro-framework gọn nhẹ, linh hoạt của Python, cho phép xây dựng các ứng dụng web (hoặc API) nhanh chóng mà không bị ràng buộc bởi quá nhiều quy tắc hay thư viện mặc định, rất phù hợp cho các dự án có quy mô vừa và nhỏ như Quản lý Siêu thị Mini.
+94: Python: Ngôn ngữ lập trình chính, được đánh giá cao về sự rõ ràng, dễ đọc và có cộng đồng hỗ trợ lớn, giúp xử lý các nghiệp vụ logic phức tạp của siêu thị một cách hiệu quả.
+95: Giao diện người dùng (Front-end):
+96: HTML, CSS và JavaScript: Sử dụng các công nghệ tiêu chuẩn của web để xây dựng giao diện người dùng. Có thể sử dụng thêm các thư viện CSS như Bootstrap để đảm bảo giao diện thân thiện, dễ nhìn và tương thích trên nhiều thiết bị (responsive design).
+97: Jinja2: Flask sử dụng Jinja2 làm template engine mặc định, giúp tích hợp dữ liệu từ back-end vào các trang HTML một cách dễ dàng và hiệu quả.
+99: Cơ sở Dữ liệu (Database):
+100: MySQL 8.0: Hệ quản trị cơ sở dữ liệu quan hệ (RDBMS) được sử dụng để lưu trữ dữ liệu có cấu trúc. Hệ thống áp dụng mô hình Database-per-Service, trong đó mỗi microservice sở hữu một database riêng biệt
+101: PyMySQL: Driver Python để kết nối với MySQL server, hỗ trợ giao thức MySQL thuần túy mà không cần thư viện C bên ngoài.
+102: Flask-SQLAlchemy: Thư viện ORM (Object-Relational Mapping) tích hợp SQLAlchemy vào Flask, cho phép thao tác với cơ sở dữ liệu bằng các đối tượng Python thay vì sử dụng trực tiếp câu lệnh SQL. Điều này giúp code dễ bảo trì, an toàn hơn và hỗ trợ migration dễ dàng.
+104: Phân tích chức năng hệ thống siêu thị mini
+105: 2.1. Các yêu cầu chức năng chính
+106: 	Hệ thống quản lý siêu thị mini cần đáp ứng các nhóm chức năng sau:
+107: Quản lý hàng hóa
+108: Thêm/sửa/xóa sản phẩm.
+109: Quản lý tồn kho (nhập – xuất – kiểm kê).
+110: Theo dõi hạn sử dụng và cảnh báo hàng sắp hết hạn.
+111: Quản lý bán hàng (POS)
+112: Tạo hóa đơn bán hàng.
+113: Quét mã vạch để thêm sản phẩm vào hóa đơn.
+114: Tính tổng tiền, chiết khấu, xuất hóa đơn cho khách.
+115: Quản lý nhà cung cấp
+116: Lưu thông tin nhà cung cấp.
+117: Quản lý đơn nhập hàng và lịch sử nhập hàng.
+118: Quản lý khách hàng
+119: Lưu thông tin khách hàng thành viên.
+120: Tích điểm, nâng hạng, kiểm tra lịch sử mua hàng.
+121: Quản lý nhân viên	
+122: Thêm/sửa/xóa nhân viên.
+123: Phân quyền (thu ngân / quản lý / admin).
+124: Theo dõi ca làm việc.
+125: Báo cáo – Thống kê
+126: Báo cáo doanh thu theo ngày/tháng.
+127: Báo cáo hàng bán chạy – hàng tồn kho.
+128: Báo cáo chi phí nhập hàng – lợi nhuận.
+132: Xác thực & phân quyền
+133: Đăng nhập/đăng xuất.
+134: Kiểm soát truy cập theo vai trò (Role-based Access Control – RBAC).
+
+135: 2.2. Yêu cầu phi chức năng
+136: Hiệu năng (Performance)
+137: Thời gian đáp ứng API < 3 giây với 95% yêu cầu.
+138: Hệ thống POS phải phản hồi nhanh để không làm chậm dòng khách.
+139: Khả năng mở rộng (Scalability)
+140: Hỗ trợ mở rộng số lượng mặt hàng và chi nhánh nếu siêu thị mở rộng.
+141: Dễ tách thành nhiều microservice khi triển khai SOA.
+142: Bảo mật (Security)
+143: Quản lý phiên đăng nhập bằng JWT hoặc OAuth2.
+144: Phân quyền rõ ràng từng chức năng.
+145: Mã hóa mật khẩu (BCrypt/SHA-256).
+146: Ghi log truy cập.
+147: Tính ổn định & sẵn sàng
+148: Hệ thống hoạt động ổn định > 99%.
+149: Backup dữ liệu định kỳ.
+150: Tính dễ sử dụng (Usability)
+151: Giao diện POS trực quan, thao tác đơn giản.
+152: Nhân viên mới có thể sử dụng sau 5–10 phút làm quen.
+153: Khả năng tích hợp
+154: Tích hợp máy quét mã vạch, máy in hóa đơn.
+155: Có API để kết nối với dịch vụ vận chuyển hoặc thanh toán.
+157: 2.3. Biểu đồ ca sử dụng
+158: Tác nhân
+159: Nhân viên bán hàng (Cashier)
+160: Quản lý (Manager)
+161: Nhà cung cấp (Supplier)
+162: Khách hàng (Customer)
+163: Hệ thống thanh toán (Payment Service)
+171: Các Use Case chính:
+172: Nhân viên bán hàng
+176: Quản lý
+178: Khách hàng
+181: Nhà cung cấp
+183: 2.4. Biểu đồ luồng hoạt động
+184: Quy trình bán hàng
+188: Nhập kho
+191: Thêm mới sản phẩm
+198: Báo cáo doanh thu
+200: Thiết kế kiến trúc SOA cho hệ thống:
+201: 3.1. Mô hình tổng quan kiến trúc SOA của hệ thống:
+202: 3.1.1. Giới thiệu kiến trúc
+203: Hệ thống Quản lý Siêu thị Mini được thiết kế theo kiến trúc hướng dịch vụ (SOA), trong đó ứng dụng được phân rã thành các dịch vụ độc lập. Mỗi dịch vụ đảm nhận một chức năng nghiệp vụ cụ thể, có thể được phát triển, triển khai và mở rộng độc lập.
+204: 3.1.2. Các thành phần kiến trúc
+205: Kiến trúc tổng quan bao gồm 4 tầng chính:
+206: Ngoài ra còn có:
+207: Service Registry: Consul - đăng ký và khám phá dịch vụ
+208: Shared Library: consul_utils.py - thư viện dùng chung
+209: 3.1.3. Sơ đồ kiến trúc tổng quan
+212: Mô tả Luồng hoạt động của hệ thống
+213: - Hệ thống hoạt động dựa trên cơ chế giao tiếp giữa các thành phần thông qua giao thức HTTP/REST, với API Gateway đóng vai trò là cửa ngõ duy nhất và Consul đóng vai trò quản lý địa chỉ dịch vụ. Quy trình hoạt động được chia thành 3 giai đoạn chính:
+214: 1. Giai đoạn Khởi động và Đăng ký (Service Registration)
+215: Đây là bước diễn ra đầu tiên khi hệ thống được bật lên, trước khi có bất kỳ người dùng nào truy cập.
+216: Hành động: Khi các dịch vụ con trong Service Layer (như Auth Service, Product Service, Sales Service...) được khởi động, chúng sẽ tự động gửi một tín hiệu đến Consul (Service Registry) tại cổng 8500.
+217: Mục đích: Để thông báo cho Consul biết sự tồn tại của chúng, kèm theo thông tin định danh như: Tên dịch vụ, địa chỉ IP, và Port đang chạy (ví dụ: Product Service đang chạy tại Port 5001).
+218: Kết quả: Consul cập nhật danh sách các dịch vụ đang hoạt động ("Live") vào sổ đăng ký của mình. Các đường nét đứt (Register) trong sơ đồ thể hiện luồng này.
+220: 2. Giai đoạn Xử lý Yêu cầu từ Người dùng (Request Handling)
+221: Khi người dùng bắt đầu tương tác với hệ thống (ví dụ: Nhân viên bán hàng tạo đơn hàng, Quản lý xem báo cáo):
+222: Bước 1: Gửi yêu cầu (Client to Gateway)
+223: Người dùng thao tác trên Client Layer (Web Browser, Staff Portal, hoặc Dashboard).
+224: Các ứng dụng này không gọi trực tiếp đến các Service con. Thay vào đó, chúng gửi toàn bộ request (HTTP/REST) đến API Gateway tại cổng 5000.
+225: Bước 2: Định tuyến và Khám phá dịch vụ (Service Discovery)
+226: API Gateway nhận request. Tuy nhiên, Gateway không biết xử lý logic nghiệp vụ, cũng không biết địa chỉ cụ thể của các service con (do địa chỉ có thể thay đổi động).
+227: Gateway sẽ giao tiếp với Consul (mũi tên Service Discovery) để hỏi: "Dịch vụ Product Service đang nằm ở đâu?".
+228: Consul trả về địa chỉ IP và Port tương ứng (ví dụ: localhost:5001).
+229: Bước 3: Điều hướng (Routing)
+230: Sau khi có địa chỉ, API Gateway chuyển tiếp (forward) yêu cầu của người dùng đến đúng dịch vụ đích trong Service Layer.
+231: Ví dụ: Nếu người dùng muốn đăng nhập, Gateway chuyển đến Auth Service (Port 5100); nếu muốn xem hàng tồn kho, chuyển đến Inventory Service (Port 5002).
+232: 3. Giai đoạn Xử lý Nghiệp vụ và Dữ liệu (Business Logic & Data Access)
+233: Bước 1: Xử lý tại Service
+234: Dịch vụ đích nhận được yêu cầu từ Gateway, thực hiện các logic nghiệp vụ cần thiết (tính toán tiền, kiểm tra mật khẩu, trừ kho...).
+235: Bước 2: Truy xuất Dữ liệu (Data Layer)
+236: Mỗi dịch vụ chỉ kết nối và làm việc với cơ sở dữ liệu (Database) riêng biệt của nó (Mô hình Database-per-Service).
+237: Ví dụ:
+238: Sales Service chỉ đọc/ghi vào sales_db.
+239: Product Service chỉ đọc/ghi vào product_db.
+240: Điều này đảm bảo tính độc lập, nếu một database bị lỗi thì các dịch vụ khác vẫn hoạt động bình thường.
+241: 4. Phản hồi (Response)
+242: Sau khi Dịch vụ xử lý xong và lấy được dữ liệu từ Database, nó sẽ trả kết quả ngược lại theo quy trình: Service $\rightarrow$ API Gateway $\rightarrow$ Client Layer để hiển thị cho người dùng.
+243: 3.1.4. Đặc điểm kiến trúc
+244: 3.2. Mô tả các dịch vụ chính:
+245: 3.2.1. Tổng quan các dịch vụ
+246: Hệ thống bao gồm 7 microservices, mỗi service chịu trách nhiệm một domain nghiệp vụ:
+248: 3.2.2. Chi tiết từng dịch vụ
+249: Authentication Service (Port 5100)
+250: Mục đích: Xử lý xác thực người dùng và phân quyền truy cập
+251: Chức năng chính:
+252: Đăng ký tài khoản người dùng mới
+253: Xác thực đăng nhập (username/password)
+254: Cấp token truy cập
+255: Quản lý vai trò (admin, manager, staff, customer)
+256: Entities:
+257: User: Thông tin tài khoản
+258: Role: Vai trò và quyền hạn
+259: RefreshToken: Token làm mới
+260: API Endpoints:
+262: Product Service (Port 5001)
+263: Mục đích: Quản lý danh mục sản phẩm của siêu thị
+264: Chức năng chính:
+265: Thêm, sửa, xóa sản phẩm
+266: Tra cứu theo mã vạch (barcode)
+267: Tra cứu theo SKU
+268: Quản lý danh mục, đơn vị tính
+269: Lưu thông tin nhà cung cấp, ngày sản xuất, hạn sử dụng
+270: Entities:
+271: Product: Thông tin sản phẩm
+272: API Endpoints:
+274: Inventory Service (Port 5002)
+275: Mục đích: Quản lý tồn kho và theo dõi biến động hàng hóa
+276: Chức năng chính:
+277: Theo dõi số lượng tồn kho theo thời gian thực
+278: Nhập kho (in), xuất kho (out), điều chỉnh (adjust)
+279: Cảnh báo sản phẩm sắp hết (dưới mức tối thiểu)
+280: Cảnh báo sản phẩm sắp hết hạn
+281: Ghi nhận lịch sử biến động kho
+282: Entities:
+283: Inventory: Thông tin tồn kho
+284: InventoryMovement: Lịch sử biến động
+285: API Endpoints:
+287: Sales Service (Port 5003)
+288: Mục đích: Xử lý giao dịch bán hàng và báo cáo doanh thu
+289: Chức năng chính:
+290: Tạo hóa đơn bán hàng (POS)
+291: Thêm sản phẩm vào hóa đơn
+292: Xử lý thanh toán (tiền mặt, thẻ, chuyển khoản, ví điện tử)
+293: Áp dụng chiết khấu
+294: Báo cáo doanh thu (theo ngày, tháng)
+295: Tìm kiếm và lọc hóa đơn
+296: Entities:
+297: Invoice: Hóa đơn bán hàng
+298: InvoiceDetail: Chi tiết sản phẩm trong hóa đơn
+299: API Endpoints:
+301: Supplier Service (Port 5004)
+302: Mục đích: Quản lý nhà cung cấp và đơn nhập hàng
+303: Chức năng chính:
+304: CRUD thông tin nhà cung cấp
+305: Tạo đơn nhập hàng (Purchase Order)
+306: Theo dõi trạng thái đơn hàng: 
+307:  Chờ duyệt → Đã duyệt → Đã nhận → Đã thanh toán
+308: Quản lý thanh toán cho nhà cung cấp
+309: Entities:
+310: Supplier: Thông tin nhà cung cấp
+311: PurchaseOrder: Đơn nhập hàng
+312: PurchaseOrderDetail: Chi tiết đơn nhập
+313: API Endpoints:
+315: Customer Service (Port 5005)
+316: Mục đích: Quản lý khách hàng thành viên và chương trình loyalty
+317: Chức năng chính:
+318: Đăng ký khách hàng thành viên
+319: Tra cứu khách hàng theo số điện thoại
+320: Hệ thống tích điểm (mỗi 1,000đ = 1 điểm)
+321: Tự động nâng hạng thành viên
+322: Các hạng: Member → Silver (3%) → Gold (5%) → Platinum (10%)
+323: Entities:
+324: Customer: Thông tin khách hàng
+325: MemberRank: Hạng thành viên
+326: PurchaseHistory: Lịch sử mua hàng
+327: API Endpoints:
+329: Employee Service (Port 5006)
+330: Mục đích: Quản lý nhân sự và phân ca làm việc
+331: Chức năng chính:
+332: CRUD thông tin nhân viên
+333: Phân vai trò (Quản lý, Thu ngân, Kho, Bán hàng)
+334: Quản lý ca làm việc (Sáng, Chiều, Đêm, Hành chính)
+335: Phân công ca cho nhân viên
+336: Đăng nhập nhân viên (theo mã NV + mật khẩu)
+337: Entities:
+338: Employee: Thông tin nhân viên
+339: Role: Vai trò
+340: WorkShift: Ca làm việc
+341: EmployeeShift: Phân công ca
+342: API Endpoints:
+344: 3.2.3. Biểu đồ luồng dữ liệu (theo chức năng):
+345: Biểu đồ ngữ cảnh (DFD Level 0)
+347: Biểu đồ luồng dữ liệu chi tiết (DFD Level 1)
+348: Dịch vụ Quản trị & Bảo mật (Auth Service & Employee Service)
+350: Dịch vụ Hàng hóa (Product Service & Inventory Service)
+352: Dịch vụ Bán hàng (Sales Service) 
+354: Dịch vụ Đối tác (Supplier Service & Customer Service)
+356: 3.2.4. Biểu đồ tuần tự cho từng dịch vụ:
+357: Auth Service: Quy trình Đăng nhập (Login Flow)
+359: Product Service: Thêm sản phẩm mới (Create Product)
+361: Sales Service: Quy trình Thanh toán (Checkout) 
+364: Inventory Service: Cập nhật biến động kho (Stock Adjustment)
+366: Supplier Service: Quy trình Nhập hàng (Purchase Order)
+369: Customer Service: Tích điểm & Nâng hạng (Loyalty)
+371: Employee Service: Phân ca làm việc (Shift Assignment)
+374: Phân tích thiết kế dữ liệu hệ thống:
+375: 4.1. Mô hình thực thể liên kết của từng dịch vụ:
+376: 4.1.1.  Auth Service Database
+378: 4.1.2. Product Service Database
+380: 4.1.3. Inventory Service Database
+382: 4.1.4. Sales Service Database
+384: 4.1.5. Supplier Service Database
+386: 4.1.6. Customer Service Database
+388: 4.1.7.  Employee Service Database
+391: 4.2. ER Diagram tổng quan
+393: Mô tả chi tiết:
+- Product Database (product_db)
+394: Bảng products:
+396: - Inventory Database (inventory_db)
+397: Bảng inventory:
+400: Bảng inventory_movements:
+402: - Sales Database (sales_db)
+403: Bảng invoices:
+405: Bảng invoice_details (Chi tiết hóa đơn):
+408: - Customer Database (customer_db)
+409: Bảng customers (Khách hàng):
+411: Bảng member_ranks:
+413: Bảng purchase_history (Lịch sử tích điểm/mua hàng):
+414: - Supplier Database (supplier_db)
+415: Bảng suppliers (Nhà cung cấp):
+417: Bảng purchase_orders (Đơn nhập hàng):
+419: Bảng purchase_order_details (Chi tiết nhập hàng):
+421: - Employee Database (employee_db)
+422: Bảng employees (Nhân viên):
+424: Bảng work_shifts (Ca làm việc):
+426: Bảng employee_shifts (Lịch làm việc/Chấm công):
+428: - Auth Database (auth_db)
+429: Bảng users (Tài khoản hệ thống):
+431: Bảng roles (Phân quyền):
+433: Xây dựng hệ thống:
+434: 5.1. Công nghệ và thư viện sử dụng
+436: 5.2. Kiến trúc ứng dụng Flask
+438: 5.2.1. Cấu trúc thư mục
+439: - Thư mục chính
+440: CK-SOA/
+441: ├── gateway/app.py              # API Gateway (port 5000)
+442: ├── services/
+443: │   ├── auth_service/           # Xác thực (port 5100)
+444: │   ├── product_service/        # Sản phẩm (port 5001)
+445: │   ├── inventory_service/      # Tồn kho (port 5002)
+446: │   ├── sales_service/          # Bán hàng (port 5003)
+447: │   ├── supplier_service/       # NCC (port 5004)
+448: │   ├── customer_service/       # Khách hàng (port 5005)
+449: │   └── employee_service/       # Nhân viên (port 5006)
+450: ├── frontend/templates/         # 17 HTML templates
+451: ├── shared/consul_utils.py      # Consul utilities
+452: └── database/init.sql           # Database initialization
+453: - Cấu trúc mỗi service
+454: Mỗi service tuân theo cấu trúc thống nhất:
+455: service_name/
+456: ─ app.py          -> Entry point, Flask app initialization
+457: ─ config.py       -> Database và environment config 
+458: ─ models.py       -> SQLAlchemy ORM models
+459: ─ routes.py       -> API endpoints (Flask Blueprint)
+460: ─ utils.py        -> Helper functions
+461: 5.2.2. Thiết kế giao diện
+462: Đăng nhập
+464: Đăng ký
+467: Admin
+468: Giao diện tổng quan (Dashboard)
+470: Giao diện quản lý sản phẩm
+473: Giao diện quản lý tồn kho
+475: Giao diện bán hàng (POS)
+478: Giao diện quản lý hóa đơn
+481: Giao diện quản lý khách hàng
+484: Giao diện quản lý nhân viên 
+486: Giao diện quản lý nhà cung cấp
+489: Giao diện quản lý đơn nhập hàng
+492: Nhân viên
+493: Giao diện tổng quan nhân viên
+496: Giao diện bán hàng nhân viên
+499: Giao diện tra cứu sản phẩm
+502: Giao diện tra cứu khách hàng
+505: Kết luận
+506: 6.1. Kết quả đạt được
+507: Sau quá trình nghiên cứu và phát triển, nhóm đã hoàn thành xây dựng Hệ thống Quản lý Siêu thị Mini theo kiến trúc hướng dịch vụ (SOA) với các kết quả chính sau:
+508: Về mặt kiến trúc:
+509: Thiết kế và triển khai thành công kiến trúc SOA với 7 	microservices độc lập, mỗi service đảm nhận một nghiệp vụ cụ thể
+510: Xây dựng API Gateway làm điểm truy cập duy nhất, đảm bảo tính 	bảo mật và dễ quản lý
+511: Tích hợp Consul làm Service Registry, hỗ trợ Service Discovery tự động
+512: Áp dụng mô hình Database-per-Service, đảm bảo tính độc lập dữ liệu giữa các service
+513: Về mặt chức năng:
+514: Hoàn thiện module quản lý sản phẩm với khả năng tra cứu theo mã vạch, SKU
+515: Xây dựng hệ thống quản lý tồn kho với cảnh báo hàng sắp hết và sắp hết hạn
+516: Phát triển module bán hàng (POS) hỗ trợ nhiều phương thức thanh toán
+517: Triển khai chương trình khách hàng thân thiết với cơ chế tích điểm và nâng hạng tự động
+518: Quản lý nhà cung cấp và đơn nhập hàng với theo dõi trạng thái đầy đủ
+519: Xây dựng hệ thống báo cáo doanh thu theo ngày/tháng
+521: Về mặt kỹ thuật:
+522: Sử dụng Flask framework xây dựng RESTful API chuẩn
+523: Thiết kế cơ sở dữ liệu MySQL với 7 database riêng biệt
+524: Giao diện web responsive với Bootstrap 5, hỗ trợ cả Admin và Staff Portal
+525: 6.2. Hạn chế
+526: Bên cạnh những kết quả đạt được, hệ thống vẫn còn một số hạn chế:
+527: Chưa triển khai cơ chế xác thực JWT hoàn chỉnh giữa các service
+528: Chưa có cơ chế Circuit Breaker để xử lý lỗi khi service không khả dụng
+529: Chưa tích hợp Message Queue cho giao tiếp bất đồng bộ giữa các service
+530: Chưa có chức năng backup và restore dữ liệu tự động
+531: Chưa tối ưu hiệu năng cho môi trường production với lượng truy cập lớn
+532: 6.3. Hướng phát triển
+533: Trong tương lai, nhóm đề xuất các hướng phát triển sau:
+534: Bảo mật: Triển khai OAuth 2.0/JWT để xác thực và phân quyền giữa các service
+535: Khả năng chịu lỗi: Tích hợp Circuit Breaker pattern (Hystrix) và Retry mechanism
+536: Giao tiếp bất đồng bộ: Sử dụng RabbitMQ hoặc Apache Kafka cho event-driven architecture
+537: Container hóa: Đóng gói các service bằng Docker và quản lý bằng Kubernetes
+538: Monitoring: Tích hợp Prometheus + Grafana để giám sát hiệu năng hệ thống
+539: Mobile App: Phát triển ứng dụng di động cho nhân viên và khách hàng
+540: Tích hợp thanh toán: Kết nối với các cổng thanh toán điện tử (VNPay, MoMo, ZaloPay)
+541: Machine Learning: Áp dụng AI để dự đoán nhu cầu hàng hóa và đề xuất sản phẩm

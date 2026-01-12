@@ -70,9 +70,13 @@ def proxy_request(service_name: str, path: str = ''):
         if request.method == 'GET':
             response = requests.get(url, params=request.args, timeout=30)
         elif request.method == 'POST':
-            response = requests.post(url, json=request.get_json(), timeout=30)
+            response = requests.post(url, json=request.get_json(silent=True), timeout=30)
         elif request.method == 'PUT':
-            response = requests.put(url, json=request.get_json(), timeout=30)
+            json_data = request.get_json(silent=True)
+            if json_data:
+                response = requests.put(url, json=json_data, timeout=30)
+            else:
+                response = requests.put(url, timeout=30)
         elif request.method == 'DELETE':
             response = requests.delete(url, timeout=30)
         else:

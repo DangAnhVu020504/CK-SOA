@@ -58,6 +58,7 @@
                         <th>SKU</th>
                         <th>Tên Sản Phẩm</th>
                         <th>Danh Mục</th>
+                        <th>Số Lượng</th>
                         <th>Giá</th>
                         <th>Barcode</th>
                         <th>Mã NCC</th>
@@ -67,7 +68,7 @@
                 </thead>
                 <tbody id="productsTableBody">
                     <tr>
-                        <td colspan="8" class="text-center text-muted py-4">
+                        <td colspan="9" class="text-center text-muted py-4">
                             <i class="bi bi-hourglass-split"></i> Đang tải dữ liệu...
                         </td>
                     </tr>
@@ -131,13 +132,17 @@
                     </div>
 
                     <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label">Giá Bán *</label>
                             <input type="number" class="form-control" id="price" step="1000" required>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label">Giá Vốn</label>
                             <input type="number" class="form-control" id="cost" step="1000">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Số Lượng</label>
+                            <input type="number" class="form-control" id="quantity" min="0" value="0">
                         </div>
                     </div>
 
@@ -297,15 +302,29 @@
         const tbody = document.getElementById('productsTableBody');
 
         if (!products || products.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Không có sản phẩm</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Không có sản phẩm</td></tr>';
             return;
         }
 
-        tbody.innerHTML = products.map(p => `
-            <tr>
+        tbody.innerHTML = products.map(p => {
+            // Determine stock status
+            let qtyBadge = '';
+            let rowClass = '';
+            if (p.is_out_of_stock) {
+                qtyBadge = '<span class="badge bg-danger">Hết hàng</span>';
+                rowClass = 'style="opacity: 0.5;"';
+            } else if (p.is_low_stock) {
+                qtyBadge = `<span class="badge bg-warning text-dark">${p.quantity}</span> <small class="text-warning">Sắp hết</small>`;
+            } else {
+                qtyBadge = `<span class="badge bg-success">${p.quantity || 0}</span>`;
+            }
+
+            return `
+            <tr ${rowClass}>
                 <td><strong>${p.sku}</strong></td>
                 <td>${p.name}</td>
                 <td><span class="badge bg-info">${p.category}</span></td>
+                <td>${qtyBadge}</td>
                 <td>${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p.selling_price || 0)}</td>
                 <td><code>${p.barcode}</code></td>
                 <td>${p.supplier_id ? 'NCC' + String(p.supplier_id).padStart(3, '0') : 'N/A'}</td>
@@ -326,7 +345,7 @@
                     </button>
                 </td>
             </tr>
-        `).join('');
+        `}).join('');
     }
 
     function renderPagination(pages, currentPage) {
@@ -378,6 +397,7 @@
                     // Sử dụng đúng tên trường từ API
                     document.getElementById('price').value = p.selling_price || 0;
                     document.getElementById('cost').value = p.cost_price || '';
+                    document.getElementById('quantity').value = p.quantity || 0;
                     document.getElementById('supplier_id').value = p.supplier_id || '';
                     // Thêm gán giá trị cho ngày sản xuất và ngày hết hạn
                     document.getElementById('manufacturing_date').value = p.manufacturing_date || '';
@@ -476,6 +496,7 @@
             // Sử dụng đúng tên trường của API backend
             selling_price: parseFloat(document.getElementById('price').value) || 0,
             cost_price: parseFloat(document.getElementById('cost').value) || null,
+            quantity: parseInt(document.getElementById('quantity').value) || 0,
             manufacturing_date: document.getElementById('manufacturing_date').value || null,
             expiry_date: document.getElementById('expiry_date').value || null,
             supplier_id: parseInt(document.getElementById('supplier_id').value) || null

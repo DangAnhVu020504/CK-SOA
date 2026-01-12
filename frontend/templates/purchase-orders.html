@@ -121,21 +121,64 @@
 
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label class="form-label">Tổng Tiền</label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="poTotalAmount" value="0" min="0"
-                                    step="1000">
-                                <span class="input-group-text">₫</span>
-                            </div>
+                            <label class="form-label">Ngày Nhập Hàng</label>
+                            <input type="date" class="form-control" id="poImportDate">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Trạng Thái</label>
                             <select class="form-select" id="poStatus">
                                 <option value="pending">Chờ duyệt</option>
                                 <option value="approved">Đã duyệt</option>
-                                <option value="received">Đã nhận hàng</option>
-                                <option value="cancelled">Đã hủy</option>
                             </select>
+                        </div>
+                    </div>
+
+                    <!-- Product Items Section -->
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Sản Phẩm Nhập</strong></label>
+                        <div class="border rounded p-3 bg-light">
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-5">
+                                    <select class="form-select form-select-sm" id="poProductSelect">
+                                        <option value="">-- Chọn sản phẩm --</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="number" class="form-control form-control-sm" id="poProductQty"
+                                        placeholder="Số lượng" min="1" value="1">
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="number" class="form-control form-control-sm" id="poProductPrice"
+                                        placeholder="Đơn giá" min="0" value="0">
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-success btn-sm w-100" onclick="addPOItem()">
+                                        <i class="bi bi-plus"></i> Thêm
+                                    </button>
+                                </div>
+                            </div>
+                            <table class="table table-sm table-bordered mb-0" id="poItemsTable">
+                                <thead class="table-secondary">
+                                    <tr>
+                                        <th>Sản phẩm</th>
+                                        <th width="80">SL</th>
+                                        <th width="100">Đơn giá</th>
+                                        <th width="100">Thành tiền</th>
+                                        <th width="50"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="poItemsBody">
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">Chưa có sản phẩm</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-info">
+                                        <td colspan="3"><strong>Tổng cộng:</strong></td>
+                                        <td colspan="2"><strong id="poItemsTotal">0 ₫</strong></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
                         </div>
                     </div>
 
@@ -181,6 +224,8 @@
     const API_URL = 'http://localhost:5000/api';
     let allPOData = []; // Cache for client-side filtering
     let suppliersData = [];
+    let productsData = []; // Products for dropdown
+    let poItems = []; // Current PO items
 
     const statusColors = {
         'pending': 'warning',
@@ -214,8 +259,103 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         loadSuppliers();
+        loadProducts();
         loadPurchaseOrders();
     });
+
+    function loadProducts() {
+        fetch(`${API_URL}/products?page=1&per_page=200`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    productsData = Array.isArray(data.data) ? data.data : (data.data.products || []);
+                    populateProductDropdown();
+                }
+            })
+            .catch(err => console.error('Load products error:', err));
+    }
+
+    function populateProductDropdown() {
+        const select = document.getElementById('poProductSelect');
+        if (select) {
+            select.innerHTML = '<option value="">-- Chọn sản phẩm --</option>' +
+                productsData.map(p => `<option value="${p.id}" data-price="${p.cost_price || 0}">${p.name} (${p.sku})</option>`).join('');
+        }
+    }
+
+    // ============ PO ITEMS MANAGEMENT ============
+    function addPOItem() {
+        const select = document.getElementById('poProductSelect');
+        const productId = select.value;
+        const qty = parseInt(document.getElementById('poProductQty').value) || 1;
+        const price = parseFloat(document.getElementById('poProductPrice').value) || 0;
+
+        if (!productId) {
+            alert('Vui lòng chọn sản phẩm');
+            return;
+        }
+
+        const product = productsData.find(p => p.id == productId);
+        if (!product) return;
+
+        // Check if already exists
+        const existingItem = poItems.find(i => i.product_id == productId);
+        if (existingItem) {
+            existingItem.quantity += qty;
+            existingItem.total_price = existingItem.quantity * existingItem.unit_price;
+        } else {
+            poItems.push({
+                product_id: parseInt(productId),
+                product_name: product.name,
+                quantity: qty,
+                unit_price: price || product.cost_price || 0,
+                total_price: qty * (price || product.cost_price || 0)
+            });
+        }
+
+        // Reset inputs
+        select.value = '';
+        document.getElementById('poProductQty').value = 1;
+        document.getElementById('poProductPrice').value = 0;
+
+        renderPOItems();
+    }
+
+    function removePOItem(index) {
+        poItems.splice(index, 1);
+        renderPOItems();
+    }
+
+    function renderPOItems() {
+        const tbody = document.getElementById('poItemsBody');
+        const totalEl = document.getElementById('poItemsTotal');
+
+        if (poItems.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Chưa có sản phẩm</td></tr>';
+            totalEl.textContent = '0 ₫';
+            return;
+        }
+
+        let total = 0;
+        tbody.innerHTML = poItems.map((item, index) => {
+            total += item.total_price;
+            return `
+                <tr>
+                    <td>${item.product_name}</td>
+                    <td class="text-center">${item.quantity}</td>
+                    <td>${new Intl.NumberFormat('vi-VN').format(item.unit_price)} ₫</td>
+                    <td>${new Intl.NumberFormat('vi-VN').format(item.total_price)} ₫</td>
+                    <td>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="removePOItem(${index})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        totalEl.textContent = new Intl.NumberFormat('vi-VN').format(total) + ' ₫';
+    }
 
     function loadSuppliers() {
         fetch(`${API_URL}/suppliers?page=1&per_page=100`)
@@ -291,6 +431,11 @@
                     <button class="btn btn-sm btn-danger" onclick="deletePO(${po.id})" title="Xóa">
                         <i class="bi bi-trash"></i>
                     </button>
+                    ${po.status !== 'received' && po.status !== 'paid' ? `
+                    <button class="btn btn-sm btn-primary" onclick="receiveOrder(${po.id})" title="Nhận hàng & Cập nhật kho">
+                        <i class="bi bi-box-arrow-in-down"></i>
+                    </button>
+                    ` : ''}
                     ${po.payment_status !== 'paid' ? `
                     <button class="btn btn-sm btn-success" onclick="confirmPayment(${po.id})" title="Xác nhận thanh toán">
                         <i class="bi bi-cash-coin"></i>
@@ -343,6 +488,9 @@
         document.getElementById('poNumber').value = '';
         document.getElementById('poNumber').placeholder = 'Tự động tạo';
         document.getElementById('poModalTitle').innerHTML = '<i class="bi bi-plus-circle"></i> Tạo Đơn Nhập Hàng';
+        // Reset items
+        poItems = [];
+        renderPOItems();
     }
 
     function viewPO(id) {
@@ -356,12 +504,46 @@
                     const paymentName = paymentNames[po.payment_status] || 'Chưa TT';
                     const paymentColor = paymentColors[po.payment_status] || 'secondary';
 
+                    // Build items table HTML
+                    let itemsHtml = '';
+                    if (po.items && po.items.length > 0) {
+                        itemsHtml = `
+                            <hr>
+                            <div class="mb-3">
+                                <strong>Sản Phẩm Nhập:</strong>
+                                <table class="table table-sm table-bordered mt-2">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Sản phẩm</th>
+                                            <th width="80">SL</th>
+                                            <th width="100">Đơn giá</th>
+                                            <th width="100">Thành tiền</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${po.items.map(item => `
+                                            <tr>
+                                                <td>${item.product_name || 'Sản phẩm #' + item.product_id}</td>
+                                                <td class="text-center">${item.quantity}</td>
+                                                <td>${new Intl.NumberFormat('vi-VN').format(item.unit_price || 0)} ₫</td>
+                                                <td>${new Intl.NumberFormat('vi-VN').format(item.total_price || 0)} ₫</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                    }
+
                     document.getElementById('poDetailContent').innerHTML = `
                         <div class="mb-3">
                             <strong>Số PO:</strong> <code>${po.order_number}</code>
                         </div>
                         <div class="mb-3">
                             <strong>Nhà Cung Cấp:</strong> ${po.supplier_name || 'NCC #' + po.supplier_id}
+                        </div>
+                        <div class="mb-3">
+                            <strong>Ngày Nhập Hàng:</strong> ${po.import_date ? new Date(po.import_date).toLocaleDateString('vi-VN') : 'Chưa xác định'}
                         </div>
                         <div class="mb-3">
                             <strong>Tổng Tiền:</strong> ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(po.total_amount || 0)}
@@ -387,6 +569,7 @@
                                 ${po.received_at ? new Date(po.received_at).toLocaleString('vi-VN') : 'Chưa nhận'}
                             </div>
                         </div>
+                        ${itemsHtml}
                         ${po.note ? `<div class="mb-0"><strong>Ghi Chú:</strong> ${po.note}</div>` : ''}
                     `;
                     new bootstrap.Modal(document.getElementById('poDetailModal')).show();
@@ -430,11 +613,16 @@
             return;
         }
 
+        // Calculate total from items
+        const totalFromItems = poItems.reduce((sum, item) => sum + item.total_price, 0);
+
         const formData = {
             supplier_id: parseInt(supplierId),
-            total_amount: parseFloat(document.getElementById('poTotalAmount').value) || 0,
+            total_amount: totalFromItems || 0,
             status: document.getElementById('poStatus').value,
-            note: document.getElementById('poNote').value.trim()
+            note: document.getElementById('poNote').value.trim(),
+            import_date: document.getElementById('poImportDate').value || null,
+            items: poItems
         };
 
         if (poId) {
@@ -559,6 +747,32 @@
             .catch(err => {
                 console.error('Error:', err);
                 alert('Có lỗi xảy ra');
+            });
+    }
+
+    function receiveOrder(id) {
+        const po = allPOData.find(p => p.id === id);
+        const poNumber = po ? po.order_number : 'đơn này';
+        
+        if (!confirm(`Xác nhận nhận hàng "${poNumber}"?\n\nSố lượng sẽ được cộng vào kho và sản phẩm.`)) {
+            return;
+        }
+
+        fetch(`${API_URL}/suppliers/purchase-orders/${id}/receive`, {
+            method: 'PUT'
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Nhận hàng thành công!\nSố lượng đã được cập nhật vào kho và sản phẩm.');
+                    loadPurchaseOrders();
+                } else {
+                    alert('Lỗi: ' + (data.message || 'Không thể nhận hàng'));
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Có lỗi xảy ra khi nhận hàng');
             });
     }
 </script>

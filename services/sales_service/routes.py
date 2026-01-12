@@ -6,8 +6,14 @@ from datetime import datetime
 from sqlalchemy import func
 from models import db, Invoice, InvoiceDetail
 from utils import generate_invoice_number
+import requests
 
 sales_bp = Blueprint('sales', __name__)
+
+# Service URLs
+INVENTORY_SERVICE_URL = 'http://localhost:5002'
+PRODUCT_SERVICE_URL = 'http://localhost:5001'
+
 
 
 @sales_bp.route('/health', methods=['GET'])
@@ -23,7 +29,7 @@ def health_check():
 
 @sales_bp.route('/api/sales/invoices', methods=['GET'])
 def get_invoices():
-    invoices = Invoice.query.order_by(Invoice.created_at.desc()).limit(100).all()
+    invoices = Invoice.query.order_by(Invoice.id.desc()).limit(100).all()
     return jsonify({'success': True, 'data': [i.to_dict() for i in invoices]}), 200
 
 
@@ -71,6 +77,31 @@ def create_invoice():
         db.session.add(detail)
     
     db.session.commit()
+    
+    # Trừ số lượng trong Inventory và Product sau khi tạo hóa đơn thành công
+    for item in items:
+        product_id = item.get('product_id')
+        quantity = item.get('quantity', 1)
+        
+        # Trừ số lượng trong Inventory
+        try:
+            requests.post(f'{INVENTORY_SERVICE_URL}/api/inventory/deduct', json={
+                'product_id': product_id,
+                'quantity': quantity,
+                'reference': invoice_number
+            }, timeout=5)
+        except Exception as e:
+            print(f'Warning: Could not deduct inventory for product {product_id}: {e}')
+        
+        # Trừ số lượng trong Product
+        try:
+            requests.put(f'{PRODUCT_SERVICE_URL}/api/products/{product_id}/update-quantity', json={
+                'operation': 'subtract',
+                'quantity_change': quantity
+            }, timeout=5)
+        except Exception as e:
+            print(f'Warning: Could not update product quantity for product {product_id}: {e}')
+    
     return jsonify({
         'success': True,
         'message': 'Tạo hóa đơn thành công',
@@ -250,8 +281,8 @@ def search_invoices():
     if payment_method:
         query = query.filter(Invoice.payment_method == payment_method)
     
-    # Order by created_at desc
-    invoices = query.order_by(Invoice.created_at.desc()).limit(100).all()
+    # Order by id desc (newest first)
+    invoices = query.order_by(Invoice.id.desc()).limit(100).all()
     
     return jsonify({
         'success': True,

@@ -18,6 +18,9 @@ class Inventory(db.Model):
     location = db.Column(db.String(100))
     last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    # Ngưỡng sắp hết hàng
+    LOW_STOCK_THRESHOLD = 50
+    
     def to_dict(self):
         return {
             'id': self.id,
@@ -27,7 +30,8 @@ class Inventory(db.Model):
             'max_quantity': self.max_quantity,
             'location': self.location,
             'last_updated': self.last_updated.isoformat() if self.last_updated else None,
-            'is_low_stock': self.quantity <= self.min_quantity
+            'is_low_stock': self.quantity <= self.LOW_STOCK_THRESHOLD and self.quantity > 0,
+            'is_out_of_stock': self.quantity <= 0
         }
 
 

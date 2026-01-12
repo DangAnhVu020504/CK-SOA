@@ -22,6 +22,7 @@ CREATE TABLE products (
     unit VARCHAR(20) DEFAULT 'cái',
     cost_price FLOAT DEFAULT 0,
     selling_price FLOAT DEFAULT 0,
+    quantity INT DEFAULT 0,
     supplier_id INT,
     manufacturing_date DATE,
     expiry_date DATE,
@@ -34,18 +35,18 @@ CREATE TABLE products (
     INDEX idx_supplier (supplier_id)
 );
 
--- Dữ liệu mẫu sản phẩm (với supplier_id, manufacturing_date, expiry_date)
-INSERT INTO products (sku, barcode, name, description, category, unit, cost_price, selling_price, supplier_id, manufacturing_date, expiry_date) VALUES
-('SP001', '8934567890001', 'Sữa tươi Vinamilk 1L', 'Sữa tươi tiệt trùng có đường', 'Sữa & Sản phẩm từ sữa', 'hộp', 25000, 32000, 1, '2025-12-01', '2026-06-01'),
-('SP002', '8934567890002', 'Mì Hảo Hảo gói', 'Mì ăn liền vị tôm chua cay', 'Thực phẩm khô', 'gói', 3000, 4500, 2, '2025-11-15', '2026-11-15'),
-('SP003', '8934567890003', 'Nước ngọt Coca Cola lon 330ml', 'Nước giải khát có gas', 'Nước giải khát', 'lon', 8000, 12000, 3, '2025-10-01', '2026-10-01'),
-('SP004', '8934567890004', 'Dầu ăn Neptune 1L', 'Dầu thực vật tinh luyện', 'Dầu ăn & Gia vị', 'chai', 35000, 45000, 5, '2025-09-01', '2027-09-01'),
-('SP005', '8934567890005', 'Gạo ST25 5kg', 'Gạo thơm đặc sản', 'Gạo & Ngũ cốc', 'bao', 120000, 150000, 4, '2025-12-15', '2026-12-15'),
-('SP006', '8934567890006', 'Bánh Oreo 137g', 'Bánh quy socola nhân kem', 'Bánh kẹo', 'gói', 18000, 25000, 2, '2025-11-01', '2026-05-01'),
-('SP007', '8934567890007', 'Nước mắm Phú Quốc 500ml', 'Nước mắm cá cốt', 'Dầu ăn & Gia vị', 'chai', 40000, 55000, 4, '2025-08-01', '2027-08-01'),
-('SP008', '8934567890008', 'Sữa chua Vinamilk lốc 4', 'Sữa chua có đường', 'Sữa & Sản phẩm từ sữa', 'lốc', 20000, 28000, 1, '2025-12-20', '2026-01-20'),
-('SP009', '8934567890009', 'Bột giặt OMO 3kg', 'Bột giặt siêu sạch', 'Đồ gia dụng', 'gói', 95000, 120000, NULL, NULL, NULL),
-('SP010', '8934567890010', 'Khăn giấy Kleenex 100 tờ', 'Khăn giấy mềm mịn', 'Đồ gia dụng', 'hộp', 25000, 35000, NULL, NULL, NULL);
+-- Dữ liệu mẫu sản phẩm (với supplier_id, manufacturing_date, expiry_date, quantity)
+INSERT INTO products (sku, barcode, name, description, category, unit, cost_price, selling_price, quantity, supplier_id, manufacturing_date, expiry_date) VALUES
+('SP001', '8934567890001', 'Sữa tươi Vinamilk 1L', 'Sữa tươi tiệt trùng có đường', 'Sữa & Sản phẩm từ sữa', 'hộp', 25000, 32000, 150, 1, '2025-12-01', '2026-06-01'),
+('SP002', '8934567890002', 'Mì Hảo Hảo gói', 'Mì ăn liền vị tôm chua cay', 'Thực phẩm khô', 'gói', 3000, 4500, 500, 2, '2025-11-15', '2026-11-15'),
+('SP003', '8934567890003', 'Nước ngọt Coca Cola lon 330ml', 'Nước giải khát có gas', 'Nước giải khát', 'lon', 8000, 12000, 25, 3, '2025-10-01', '2026-10-01'),
+('SP004', '8934567890004', 'Dầu ăn Neptune 1L', 'Dầu thực vật tinh luyện', 'Dầu ăn & Gia vị', 'chai', 35000, 45000, 80, 5, '2025-09-01', '2027-09-01'),
+('SP005', '8934567890005', 'Gạo ST25 5kg', 'Gạo thơm đặc sản', 'Gạo & Ngũ cốc', 'bao', 120000, 150000, 8, 4, '2025-12-15', '2026-12-15'),
+('SP006', '8934567890006', 'Bánh Oreo 137g', 'Bánh quy socola nhân kem', 'Bánh kẹo', 'gói', 18000, 25000, 15, 2, '2025-11-01', '2026-05-01'),
+('SP007', '8934567890007', 'Nước mắm Phú Quốc 500ml', 'Nước mắm cá cốt', 'Dầu ăn & Gia vị', 'chai', 40000, 55000, 60, 4, '2025-08-01', '2027-08-01'),
+('SP008', '8934567890008', 'Sữa chua Vinamilk lốc 4', 'Sữa chua có đường', 'Sữa & Sản phẩm từ sữa', 'lốc', 20000, 28000, 100, 1, '2025-12-20', '2026-01-20'),
+('SP009', '8934567890009', 'Bột giặt OMO 3kg', 'Bột giặt siêu sạch', 'Đồ gia dụng', 'gói', 95000, 120000, 5, NULL, NULL, NULL),
+('SP010', '8934567890010', 'Khăn giấy Kleenex 100 tờ', 'Khăn giấy mềm mịn', 'Đồ gia dụng', 'hộp', 25000, 35000, 200, NULL, NULL, NULL);
 
 
 USE inventory_db;
@@ -209,6 +210,7 @@ CREATE TABLE purchase_orders (
     status ENUM('pending', 'approved', 'received', 'cancelled', 'paid') DEFAULT 'pending',
     payment_status ENUM('unpaid', 'partial', 'paid') DEFAULT 'unpaid',
     note TEXT,
+    import_date DATE,
     created_by INT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     approved_at DATETIME,
@@ -233,8 +235,6 @@ CREATE TABLE purchase_order_details (
     INDEX idx_order (order_id)
 );
 
-ALTER TABLE supplier_db.purchase_orders 
-ADD COLUMN paid_at DATETIME;
 -- Dữ liệu mẫu nhà cung cấp
 INSERT INTO suppliers (code, name, contact_person, phone, email, address, tax_code) VALUES
 ('NCC001', 'Công ty TNHH Vinamilk', 'Nguyễn Văn A', '028-1234567', 'sales@vinamilk.com', '10 Tân Trào, Quận 7, TP.HCM', '0301234567'),
@@ -356,6 +356,7 @@ CREATE TABLE employees (
     address TEXT,
     date_of_birth DATE,
     gender ENUM('male', 'female', 'other') DEFAULT 'other',
+    id_card VARCHAR(20),
     role_id INT,
     base_salary FLOAT DEFAULT 0,
     hire_date DATE,
@@ -481,14 +482,45 @@ INSERT INTO users (username, email, password_hash, full_name, role_id, employee_
 ('thu.tran', 'thu.tran@supermarket.com', 'scrypt:32768:8:1$TKwGxVPCZW4bGw0e$7d8f5b3c2a1e9f0d8c7b6a5e4d3c2b1a0f9e8d7c6b5a4d3c2b1a0f9e8d7c6b5a', 'Trần Thị Thu', 3, 2),
 ('kho.le', 'kho.le@supermarket.com', 'scrypt:32768:8:1$TKwGxVPCZW4bGw0e$7d8f5b3c2a1e9f0d8c7b6a5e4d3c2b1a0f9e8d7c6b5a4d3c2b1a0f9e8d7c6b5a', 'Lê Văn Kho', 3, 3);
 
-ALTER TABLE employee_db.employees 
-ADD COLUMN address TEXT,
-ADD COLUMN date_of_birth DATE,
-ADD COLUMN gender VARCHAR(10),
-ADD COLUMN id_card VARCHAR(20),
-ADD COLUMN hire_date DATE;
+-- ============ MIGRATION SCRIPTS ============
+-- Thêm các cột còn thiếu (chạy an toàn - bỏ qua nếu đã tồn tại)
 
-ALTER TABLE employee_db.employees ADD COLUMN id_card VARCHAR(20);
+-- Migration: Add id_card column to employees if not exists
+SET @dbname = 'employee_db';
+SET @tablename = 'employees';
+SET @columnname = 'id_card';
+SET @preparedStatement = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+   WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = @tablename AND COLUMN_NAME = @columnname) > 0,
+  'SELECT 1',
+  'ALTER TABLE employee_db.employees ADD COLUMN id_card VARCHAR(20) AFTER gender'
+));
+PREPARE alterIfNotExists FROM @preparedStatement;
+EXECUTE alterIfNotExists;
+DEALLOCATE PREPARE alterIfNotExists;
+
+-- Migration: Add import_date column to purchase_orders if not exists  
+SET @dbname = 'supplier_db';
+SET @tablename = 'purchase_orders';
+SET @columnname = 'import_date';
+SET @preparedStatement = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+   WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = @tablename AND COLUMN_NAME = @columnname) > 0,
+  'SELECT 1',
+  'ALTER TABLE supplier_db.purchase_orders ADD COLUMN import_date DATE AFTER note'
+));
+PREPARE alterIfNotExists FROM @preparedStatement;
+EXECUTE alterIfNotExists;
+DEALLOCATE PREPARE alterIfNotExists;
+
+-- Sync product quantities with inventory
+UPDATE product_db.products p
+SET p.quantity = (
+    SELECT COALESCE(i.quantity, 0) 
+    FROM inventory_db.inventory i 
+    WHERE i.product_id = p.id
+)
+WHERE EXISTS (SELECT 1 FROM inventory_db.inventory i WHERE i.product_id = p.id);
 
 SELECT 'Database setup completed successfully!' AS Status;
 SELECT 'All 7 databases have been created with sample data.' AS Info;

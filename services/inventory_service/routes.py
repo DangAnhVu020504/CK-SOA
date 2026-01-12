@@ -39,11 +39,69 @@ def get_by_product(product_id):
 
 @inventory_bp.route('/api/inventory/low-stock', methods=['GET'])
 def get_low_stock():
-    items = Inventory.query.filter(Inventory.quantity <= Inventory.min_quantity).all()
+    """Lấy sản phẩm sắp hết hàng (quantity <= 50 hoặc <= min_quantity)"""
+    threshold = request.args.get('threshold', 50, type=int)
+    items = Inventory.query.filter(
+        db.or_(
+            Inventory.quantity <= Inventory.min_quantity,
+            Inventory.quantity <= threshold
+        ),
+        Inventory.quantity > 0
+    ).all()
     return jsonify({
         'success': True,
         'data': [i.to_dict() for i in items],
         'count': len(items)
+    }), 200
+
+
+@inventory_bp.route('/api/inventory/out-of-stock', methods=['GET'])
+def get_out_of_stock():
+    """Lấy sản phẩm hết hàng (quantity = 0)"""
+    items = Inventory.query.filter(Inventory.quantity <= 0).all()
+    return jsonify({
+        'success': True,
+        'data': [i.to_dict() for i in items],
+        'count': len(items)
+    }), 200
+
+
+@inventory_bp.route('/api/inventory/deduct', methods=['POST'])
+def deduct_inventory():
+    """Trừ số lượng khi bán hàng - được gọi từ sales_service"""
+    data = request.get_json()
+    product_id = data.get('product_id')
+    quantity = data.get('quantity', 0)
+    reference = data.get('reference')  # Số hóa đơn
+    
+    if not product_id or quantity <= 0:
+        return jsonify({'success': False, 'message': 'product_id và quantity là bắt buộc'}), 400
+    
+    item = Inventory.query.filter_by(product_id=product_id).first()
+    if not item:
+        return jsonify({'success': False, 'message': 'Không tìm thấy sản phẩm trong kho'}), 404
+    
+    if item.quantity < quantity:
+        return jsonify({'success': False, 'message': 'Không đủ hàng trong kho'}), 400
+    
+    item.quantity -= quantity
+    
+    # Ghi lại lịch sử xuất kho
+    movement = InventoryMovement(
+        product_id=product_id,
+        movement_type='out',
+        quantity=quantity,
+        reference=reference,
+        note=f'Bán hàng - Hóa đơn {reference}'
+    )
+    
+    db.session.add(movement)
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': 'Trừ tồn kho thành công',
+        'data': item.to_dict()
     }), 200
 
 
